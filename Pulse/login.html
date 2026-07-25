@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PulseGuard — Sign In</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #EEF1F8;
+    --surface: #FFFFFF;
+    --surface-soft: #F5F7FC;
+    --border: #DDE2EE;
+    --blue-deep: #2C3E8C;
+    --blue-mid: #4A6CF7;
+    --blue-light: #7B96FF;
+    --blue-ghost: #EBF0FF;
+    --text-primary: #111827;
+    --text-secondary: #4B5563;
+    --text-muted: #9CA3AF;
+    --success: #10B981;
+    --error: #EF4444;
+    --radius: 14px;
+    --radius-sm: 8px;
+    --shadow: 0 4px 24px rgba(44,62,140,0.10);
+    --shadow-lg: 0 8px 40px rgba(44,62,140,0.15);
+  }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    color: var(--text-primary);
+    line-height: 1.5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .login-card {
+    background: var(--surface);
+    border-radius: 24px;
+    box-shadow: var(--shadow-lg);
+    padding: 48px 44px;
+    width: 100%;
+    max-width: 440px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 32px;
+    justify-content: center;
+  }
+  .brand-icon {
+    width: 36px; height: 36px;
+    background: var(--blue-ghost);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .brand-icon svg { width: 20px; height: 20px; }
+  .brand-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--blue-deep);
+    letter-spacing: -0.3px;
+  }
+  .card-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 30px;
+    color: var(--text-primary);
+    text-align: center;
+    margin-bottom: 6px;
+  }
+  .card-subtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  .field-group { margin-bottom: 18px; }
+  .field-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: 0.1px;
+  }
+  .link-small {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--blue-mid);
+    text-decoration: none;
+    cursor: pointer;
+    background: none; border: none; padding: 0;
+  }
+  .link-small:hover { text-decoration: underline; }
+  .input-wrap { position: relative; }
+  input[type="text"],
+  input[type="email"],
+  input[type="password"] {
+    width: 100%;
+    padding: 13px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: var(--text-primary);
+    background: var(--surface-soft);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  input:focus {
+    border-color: var(--blue-mid);
+    box-shadow: 0 0 0 3px rgba(74,108,247,0.12);
+    background: white;
+  }
+  input::placeholder { color: var(--text-muted); }
+  .icon-right {
+    position: absolute;
+    right: 14px; top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    background: none; border: none;
+    padding: 4px;
+    color: var(--text-muted);
+    display: flex;
+  }
+  .btn-primary {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--blue-deep) 0%, var(--blue-mid) 100%);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: opacity 0.2s, transform 0.15s;
+    margin-top: 8px;
+  }
+  .btn-primary:hover { opacity: 0.92; transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+  .divider {
+    display: flex; align-items: center; gap: 12px;
+    margin: 24px 0;
+  }
+  .divider::before, .divider::after {
+    content: ''; flex: 1;
+    height: 1px; background: var(--border);
+  }
+  .divider span {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    white-space: nowrap;
+  }
+  .social-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .btn-social {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 11px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .btn-social:hover {
+    border-color: var(--blue-mid);
+    box-shadow: 0 2px 8px rgba(74,108,247,0.10);
+  }
+  .footer-text {
+    text-align: center;
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+  .link-blue {
+    color: var(--blue-mid);
+    font-weight: 600;
+    cursor: pointer;
+    background: none; border: none;
+    font-family: inherit; font-size: inherit;
+    padding: 0;
+  }
+  .link-blue:hover { text-decoration: underline; }
+  .alert {
+    padding: 11px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .alert.error { background: #FEF2F2; color: #B91C1C; border: 1px solid #FECACA; }
+  .alert.success { background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; }
+  .alert.show { display: block; }
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (max-width: 768px) {
+    .login-card { padding: 36px 28px; }
+  }
+</style>
+</head>
+<body>
+  <div class="login-card">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#4A6CF7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+        </svg>
+      </div>
+      <span class="brand-name">PulseGuard</span>
+    </div>
+
+    <h1 class="card-title">Welcome Back</h1>
+    <p class="card-subtitle">Sign in to continue to PulseGuard</p>
+
+    <div id="login-alert" class="alert error"></div>
+
+    <div class="field-group">
+      <label for="login-email">Email Address</label>
+      <input type="email" id="login-email" placeholder="dr.smith@hospital.org" />
+    </div>
+
+    <div class="field-group">
+      <div class="field-header">
+        <label for="login-password">Password</label>
+        <button class="link-small" onclick="showForgotPassword()">Forgot Password?</button>
+      </div>
+      <div class="input-wrap">
+        <input type="password" id="login-password" placeholder="••••••••••••" />
+        <button class="icon-right" onclick="togglePassword('login-password', this)" aria-label="Toggle password">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+            <line x1="1" y1="1" x2="23" y2="23"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="login-btn" onclick="handleEmailLogin()">Sign In →</button>
+
+    <div class="divider"><span></span></div>
+
+   
+
+    <p class="footer-text">
+      Don't have an account?
+      <button class="link-blue" onclick="window.location.href='signup.html'">Sign up</button>
+    </p>
+  </div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-analytics.js";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  OAuthProvider,
+  signInWithPopup,
+  signOut,
+  sendPasswordResetEmail,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD29CBLwt9HpS_c7zrKroNzs3PDw5lSCOw",
+  authDomain: "pulseguard-c604e.firebaseapp.com",
+  projectId: "pulseguard-c604e",
+  storageBucket: "pulseguard-c604e.firebasestorage.app",
+  messagingSenderId: "688421677716",
+  appId: "1:688421677716:web:099a4d93482de4fa196281",
+  measurementId: "G-289NDK1QZM",
+  databaseURL: "https://pulseguard-c604e-default-rtdb.firebaseio.com"
+};
+
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+const auth = getAuth(app);
+
+function showAlert(id, msg, type = 'error') {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className = `alert ${type} show`;
+}
+function clearAlert(id) {
+  const el = document.getElementById(id);
+  el.className = 'alert error';
+}
+function setLoading(btnId, loading) {
+  const btn = document.getElementById(btnId);
+  btn.disabled = loading;
+  btn.innerHTML = loading ? '<span class="spinner"></span>' : 'Sign In →';
+}
+window.togglePassword = function(inputId, btn) {
+  const input = document.getElementById(inputId);
+  const isHidden = input.type === 'password';
+  input.type = isHidden ? 'text' : 'password';
+  btn.innerHTML = isHidden
+    ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`
+    : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+};
+window.showForgotPassword = async function() {
+  clearAlert('login-alert');
+  const email = document.getElementById('login-email').value.trim();
+  if (!email) {
+    showAlert('login-alert', 'Enter your email above, then click "Forgot Password?".');
+    return;
+  }
+  try {
+    await sendPasswordResetEmail(auth, email);
+    showAlert('login-alert', `Password reset email sent to ${email}.`, 'success');
+  } catch (err) {
+    showAlert('login-alert', err.message);
+  }
+};
+window.handleEmailLogin = async function() {
+  clearAlert('login-alert');
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  if (!email || !password) {
+    showAlert('login-alert', 'Please enter your email and password.');
+    return;
+  }
+  setLoading('login-btn', true);
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    window.location.href = 'dashboard.html';
+  } catch (err) {
+    const msgs = {
+      'auth/user-not-found': 'No account found with this email.',
+      'auth/wrong-password': 'Incorrect password. Please try again.',
+      'auth/invalid-email': 'Please enter a valid email address.',
+      'auth/too-many-requests': 'Too many attempts. Please wait and try again.',
+      'auth/invalid-credential': 'Invalid email or password.'
+    };
+    showAlert('login-alert', msgs[err.code] || err.message);
+  } finally {
+    setLoading('login-btn', false);
+  }
+};
+window.handleGoogleLogin = async function() {
+  clearAlert('login-alert');
+  const provider = new GoogleAuthProvider();
+  try {
+    await signInWithPopup(auth, provider);
+    window.location.href = 'dashboard.html';
+  } catch (err) {
+    if (err.code !== 'auth/popup-closed-by-user') {
+      showAlert('login-alert', err.message);
+    }
+  }
+};
+window.handleAppleLogin = async function() {
+  clearAlert('login-alert');
+  const provider = new OAuthProvider('apple.com');
+  provider.addScope('email');
+  provider.addScope('name');
+  try {
+    await signInWithPopup(auth, provider);
+    window.location.href = 'dashboard.html';
+  } catch (err) {
+    if (err.code !== 'auth/popup-closed-by-user') {
+      showAlert('login-alert', err.message);
+    }
+  }
+};
+onAuthStateChanged(auth, (user) => {
+  if (user) window.location.href = 'dashboard.html';
+});
+document.getElementById('login-password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') window.handleEmailLogin();
+});
+</script>
+</body>
+</html>

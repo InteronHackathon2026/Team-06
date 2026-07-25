@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PulseGuard — Settings</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+    <style>
+        /* ── reset & root ──────────────────────────────── */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        :root {
+            --bg: #F8FAFC;
+            --surface: #FFFFFF;
+            --surface-soft: #F1F5F9;
+            --border: #E2E8F0;
+            --blue-deep: #1E40AF;
+            --blue-mid: #3B82F6;
+            --blue-light: #60A5FA;
+            --blue-ghost: #EFF6FF;
+            --text-primary: #0F172A;
+            --text-secondary: #475569;
+            --text-muted: #94A3B8;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --error: #EF4444;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.15);
+            --sidebar-width: 240px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            color: var(--text-primary);
+            line-height: 1.5;
+            display: flex;
+        }
+
+        /* ─── SIDEBAR (exact match from Live Monitor) ─── */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 10;
+            overflow-y: auto;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 40px;
+        }
+
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--blue-ghost);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--blue-mid);
+        }
+
+        .brand-text h1 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+        }
+
+        .brand-text span {
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .nav-menu {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .nav-item:hover {
+            background: var(--surface-soft);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: var(--blue-ghost);
+            color: var(--blue-mid);
+            font-weight: 600;
+        }
+
+        
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+        }
+
+        .logout-btn:hover {
+            background: var(--surface-soft);
+            color: var(--text-primary);
+        }
+
+        /* ─── MAIN CONTENT ────────────────────────────────── */
+        .main {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 40px 56px;
+            overflow-y: auto;
+            max-height: 100vh;
+        }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 36px;
+        }
+        .page-header h1 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 28px;
+            color: var(--text-primary);
+        }
+        .page-header .user-badge {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--surface);
+            padding: 8px 16px 8px 12px;
+            border-radius: 30px;
+            box-shadow: var(--shadow);
+        }
+        .page-header .user-badge .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--blue-ghost);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--blue-deep);
+            font-weight: 700;
+            font-size: 14px;
+        }
+        .page-header .user-badge .user-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* ─── SETTINGS CARD ──────────────────────────────── */
+        .settings-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            max-width: 640px;
+        }
+        .settings-card .card-header {
+            padding: 24px 32px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .settings-card .card-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .settings-card .card-header .badge-pill {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--blue-mid);
+            background: var(--blue-ghost);
+            padding: 2px 12px;
+            border-radius: 20px;
+        }
+        .settings-card .card-body {
+            padding: 32px;
+        }
+
+        /* ─── PROFILE AVATAR ────────────────────────────── */
+        .profile-avatar-section {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 32px;
+            padding-bottom: 32px;
+            border-bottom: 1px solid var(--border);
+        }
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--blue-ghost);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'DM Serif Display', serif;
+            font-size: 32px;
+            color: var(--blue-deep);
+            flex-shrink: 0;
+        }
+        .profile-avatar-section .info {
+            display: flex;
+            flex-direction: column;
+        }
+        .profile-avatar-section .info .name {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .profile-avatar-section .info .email {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* ─── FORM FIELDS ────────────────────────────────── */
+        .field-group {
+            margin-bottom: 20px;
+        }
+        .field-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: block;
+            margin-bottom: 6px;
+        }
+        .field-group .field-value {
+            padding: 12px 16px;
+            background: var(--surface-soft);
+            border-radius: var(--radius-sm);
+            border: 1.5px solid var(--border);
+            font-size: 14px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .field-group .field-value .label {
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+        .field-group .field-value .value {
+            font-weight: 500;
+        }
+        .field-group .field-value .value.missing {
+            color: var(--text-muted);
+            font-style: italic;
+            font-weight: 400;
+        }
+        .field-group .field-value .edit-btn {
+            background: none;
+            border: none;
+            color: var(--blue-mid);
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background 0.15s;
+        }
+        .field-group .field-value .edit-btn:hover {
+            background: var(--blue-ghost);
+        }
+
+        /* ─── EDIT MODE ──────────────────────────────────── */
+        .field-group.edit-mode .field-value {
+            padding: 0;
+            border-color: var(--blue-mid);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.10);
+            background: white;
+            flex-wrap: wrap;
+        }
+        .field-group.edit-mode .field-value input,
+        .field-group.edit-mode .field-value select {
+            border: none;
+            padding: 12px 16px;
+            flex: 1;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            color: var(--text-primary);
+            background: transparent;
+            outline: none;
+            min-width: 120px;
+        }
+        .field-group.edit-mode .field-value .action-btns {
+            display: flex;
+            gap: 4px;
+            padding-right: 8px;
+        }
+        .field-group.edit-mode .field-value .action-btns button {
+            background: none;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .field-group.edit-mode .field-value .action-btns .save-btn {
+            color: white;
+            background: var(--blue-mid);
+        }
+        .field-group.edit-mode .field-value .action-btns .save-btn:hover {
+            background: var(--blue-deep);
+        }
+        .field-group.edit-mode .field-value .action-btns .cancel-btn {
+            color: var(--text-secondary);
+        }
+        .field-group.edit-mode .field-value .action-btns .cancel-btn:hover {
+            background: var(--border);
+        }
+
+        .field-group .helper-text {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* ─── TOAST / ALERT ──────────────────────────────── */
+        .toast {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            padding: 14px 24px;
+            border-radius: var(--radius-sm);
+            font-weight: 500;
+            font-size: 14px;
+            box-shadow: var(--shadow-lg);
+            display: none;
+            align-items: center;
+            gap: 10px;
+            z-index: 999;
+            max-width: 400px;
+            animation: slideUp 0.3s ease;
+        }
+        .toast.show {
+            display: flex;
+        }
+        .toast.success {
+            background: #ECFDF5;
+            color: #065F46;
+            border: 1px solid #A7F3D0;
+        }
+        .toast.error {
+            background: #FEF2F2;
+            color: #B91C1C;
+            border: 1px solid #FECACA;
+        }
+        .toast .toast-icon {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ─── LOADING STATE ──────────────────────────────── */
+        .loading-shimmer {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .loading-shimmer .shimmer-row {
+            height: 52px;
+            background: linear-gradient(90deg, var(--surface-soft) 25%, var(--border) 50%, var(--surface-soft) 75%);
+            background-size: 200% 100%;
+            border-radius: var(--radius-sm);
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            0% {
+                background-position: -200% 0;
+            }
+            100% {
+                background-position: 200% 0;
+            }
+        }
+
+        /* ─── RESPONSIVE ──────────────────────────────────── */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+                padding: 24px 12px;
+            }
+            .brand-text,
+            .nav-text {
+                display: none;
+            }
+            .main {
+                margin-left: 70px;
+                padding: 24px 20px;
+                max-height: none;
+            }
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+            .page-header .user-badge {
+                align-self: stretch;
+                justify-content: center;
+            }
+            .settings-card .card-header {
+                padding: 18px 20px;
+                flex-wrap: wrap;
+            }
+            .settings-card .card-body {
+                padding: 20px;
+            }
+            .profile-avatar-section {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+            .toast {
+                left: 16px;
+                right: 16px;
+                bottom: 16px;
+                max-width: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .settings-card .card-body {
+                padding: 16px;
+            }
+            .field-group.edit-mode .field-value {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .field-group.edit-mode .field-value .action-btns {
+                padding: 8px 12px 12px;
+                justify-content: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ─── SIDEBAR (exact match from Live Monitor) ─── -->
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-icon">P</div>
+            <div class="brand-text">
+                <h1>PulseGuard</h1>
+                <span>
+                    <span class="status-dot" id="device-status-dot" style="display:none;"></span>
+                    <span id="device-status-text">Device Active</span>
+                </span>
+            </div>
+        </div>
+
+        <nav class="nav-menu">
+            <a href="dashboard.html" class="nav-item">
+                <span>Dashboard</span>
+            </a>
+            <a href="reports.html" class="nav-item">
+                <span>Reports</span>
+            </a>
+            <a href="settings.html" class="nav-item active">
+                <span>Settings</span>
+            </a>
+        </nav>
+
+       
+
+        <button class="logout-btn" id="logout-btn">
+            <span>Logout</span>
+        </button>
+    </aside>
+
+    
+
+    <!-- ─── MAIN ─── -->
+    <div class="main">
+
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>Settings</h1>
+            <div class="user-badge" id="user-badge">
+                <div class="avatar" id="avatar-letter">?</div>
+                <span class="user-name" id="badge-name">Loading…</span>
+            </div>
+        </div>
+
+        <!-- Settings Card -->
+        <div class="settings-card">
+            <div class="card-header">
+                <h2>Profile</h2>
+                <span class="badge-pill">Professional</span>
+            </div>
+            <div class="card-body">
+
+                <!-- Loading state -->
+                <div id="loading-state" class="loading-shimmer">
+                    <div class="shimmer-row"></div>
+                    <div class="shimmer-row"></div>
+                    <div class="shimmer-row"></div>
+                    <div class="shimmer-row"></div>
+                </div>
+
+                <!-- Profile content (hidden while loading) -->
+                <div id="profile-content" style="display: none;">
+
+                    <!-- Avatar + name + email -->
+                    <div class="profile-avatar-section">
+                        <div class="profile-avatar" id="profile-avatar">?</div>
+                        <div class="info">
+                            <span class="name" id="profile-name">—</span>
+                            <span class="email" id="profile-email">—</span>
+                        </div>
+                    </div>
+
+                    <!-- ─── DISPLAY NAME ─── -->
+                    <div class="field-group" data-field="displayName">
+                        <label>Full Name</label>
+                        <div class="field-value">
+                            <span class="value" id="display-name">—</span>
+                            <button class="edit-btn" data-target="displayName">Edit</button>
+                        </div>
+                        <div class="helper-text">This is the name shown on your profile.</div>
+                    </div>
+
+                    <!-- ─── FIRST NAME ─── -->
+                    <div class="field-group" data-field="firstName">
+                        <label>First Name</label>
+                        <div class="field-value">
+                            <span class="value" id="first-name">—</span>
+                            <button class="edit-btn" data-target="firstName">Edit</button>
+                        </div>
+                    </div>
+
+                    <!-- ─── LAST NAME ─── -->
+                    <div class="field-group" data-field="lastName">
+                        <label>Last Name</label>
+                        <div class="field-value">
+                            <span class="value" id="last-name">—</span>
+                            <button class="edit-btn" data-target="lastName">Edit</button>
+                        </div>
+                    </div>
+
+                    <!-- ─── AGE ─── -->
+                    <div class="field-group" data-field="age">
+                        <label>Age</label>
+                        <div class="field-value">
+                            <span class="value" id="profile-age">—</span>
+                            <button class="edit-btn" data-target="age">Edit</button>
+                        </div>
+                    </div>
+
+                    <!-- ─── GENDER ─── -->
+                    <div class="field-group" data-field="gender">
+                        <label>Gender</label>
+                        <div class="field-value">
+                            <span class="value" id="profile-gender">—</span>
+                            <button class="edit-btn" data-target="gender">Edit</button>
+                        </div>
+                    </div>
+
+                    <!-- ─── EMAIL (read-only) ─── -->
+                    <div class="field-group" data-field="email">
+                        <label>Email Address</label>
+                        <div class="field-value" style="background: var(--surface-soft);">
+                            <span class="value" id="profile-email-readonly" style="color: var(--text-secondary);">—</span>
+                            <span style="font-size:12px;color:var(--text-muted);font-weight:500;">verified</span>
+                        </div>
+                        <div class="helper-text">Your email is managed through your account security settings.</div>
+                    </div>
+
+                </div>
+                <!-- /profile-content -->
+
+            </div>
+            <!-- /card-body -->
+        </div>
+        <!-- /settings-card -->
+
+        <p style="margin-top:24px;font-size:13px;color:var(--text-muted);">
+            🔒 Your information is securely stored and used only for your PulseGuard profile.
+        </p>
+    </div>
+
+    <!-- ─── TOAST ─── -->
+    <div id="toast" class="toast">
+        <span class="toast-icon" id="toast-icon">✓</span>
+        <span id="toast-msg">Saved!</span>
+    </div>
+
+    <!-- ─── FIREBASE ────────────────────────────────────── -->
+    <script type="importmap">
+        {
+            "imports": {
+                "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
+                "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
+                "firebase/database": "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import { initializeApp } from "firebase/app";
+        import {
+            getAuth,
+            onAuthStateChanged,
+            signOut
+        } from "firebase/auth";
+        import {
+            getDatabase,
+            ref,
+            get,
+            update
+        } from "firebase/database";
+
+        // ─── Firebase config ────────────────────────────────
+        const firebaseConfig = {
+            apiKey: "AIzaSyD29CBLwt9HpS_c7zrKroNzs3PDw5lSCOw",
+            authDomain: "pulseguard-c604e.firebaseapp.com",
+            projectId: "pulseguard-c604e",
+            storageBucket: "pulseguard-c604e.firebasestorage.app",
+            messagingSenderId: "688421677716",
+            appId: "1:688421677716:web:099a4d93482de4fa196281",
+            measurementId: "G-289NDK1QZM",
+            databaseURL: "https://pulseguard-c604e-default-rtdb.firebaseio.com"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        // ─── DOM refs ────────────────────────────────────────
+        const loadingEl = document.getElementById('loading-state');
+        const contentEl = document.getElementById('profile-content');
+
+        const profileAvatar = document.getElementById('profile-avatar');
+        const profileName = document.getElementById('profile-name');
+        const profileEmail = document.getElementById('profile-email');
+        const profileEmailReadonly = document.getElementById('profile-email-readonly');
+        const badgeName = document.getElementById('badge-name');
+        const avatarLetter = document.getElementById('avatar-letter');
+
+        const displayNameEl = document.getElementById('display-name');
+        const firstNameEl = document.getElementById('first-name');
+        const lastNameEl = document.getElementById('last-name');
+        const ageEl = document.getElementById('profile-age');
+        const genderEl = document.getElementById('profile-gender');
+
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toast-msg');
+        const toastIcon = document.getElementById('toast-icon');
+
+        let currentUser = null;
+        let userData = {};
+
+        // ─── Toast helpers ──────────────────────────────────
+        function showToast(msg, type = 'success') {
+            toast.className = `toast ${type} show`;
+            toastMsg.textContent = msg;
+            toastIcon.textContent = type === 'success' ? '✓' : '✕';
+            clearTimeout(toast._hide);
+            toast._hide = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3500);
+        }
+
+        function hideToast() {
+            toast.classList.remove('show');
+            clearTimeout(toast._hide);
+        }
+
+        // ─── Render profile ──────────────────────────────────
+        function renderProfile(data) {
+            userData = data;
+
+            const first = data.firstName || '';
+            const last = data.lastName || '';
+            const full = data.displayName || `${first} ${last}`.trim() || '—';
+            const email = data.email || '—';
+            const age = data.age ?? '—';
+            const gender = data.gender || '—';
+
+            // Avatar
+            const initial = first ? first.charAt(0).toUpperCase() : '?';
+            profileAvatar.textContent = initial;
+            avatarLetter.textContent = initial;
+
+            // Names
+            profileName.textContent = full;
+            badgeName.textContent = full;
+            displayNameEl.textContent = full;
+            firstNameEl.textContent = first || '—';
+            lastNameEl.textContent = last || '—';
+
+            // Email
+            profileEmail.textContent = email;
+            profileEmailReadonly.textContent = email;
+
+            // Age + Gender
+            ageEl.textContent = age !== '—' ? age : '—';
+            genderEl.textContent = gender !== '—' ? gender : '—';
+
+            // Show content, hide loading
+            loadingEl.style.display = 'none';
+            contentEl.style.display = 'block';
+        }
+
+        // ─── Fetch user data ────────────────────────────────
+        async function fetchUserData(user) {
+            try {
+                const userRef = ref(db, 'users/' + user.uid);
+                const snapshot = await get(userRef);
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    const merged = {
+                        uid: user.uid,
+                        email: user.email || data.email || '—',
+                        displayName: data.displayName || user.displayName || '',
+                        firstName: data.firstName || '',
+                        lastName: data.lastName || '',
+                        age: data.age ?? null,
+                        gender: data.gender || '',
+                        ...data
+                    };
+                    renderProfile(merged);
+                } else {
+                    const fallback = {
+                        uid: user.uid,
+                        email: user.email || '—',
+                        displayName: user.displayName || '',
+                        firstName: '',
+                        lastName: '',
+                        age: null,
+                        gender: ''
+                    };
+                    renderProfile(fallback);
+                }
+            } catch (err) {
+                console.error('Error fetching user data:', err);
+                showToast('Could not load profile data.', 'error');
+                const fallback = {
+                    uid: user.uid,
+                    email: user.email || '—',
+                    displayName: user.displayName || '',
+                    firstName: '',
+                    lastName: '',
+                    age: null,
+                    gender: ''
+                };
+                renderProfile(fallback);
+            }
+        }
+
+        // ─── Save field to Firebase ──────────────────────────
+        async function saveField(field, value) {
+            if (!currentUser) {
+                showToast('You must be logged in.', 'error');
+                return false;
+            }
+            try {
+                const userRef = ref(db, 'users/' + currentUser.uid);
+                await update(userRef, { [field]: value });
+                userData[field] = value;
+                renderProfile(userData);
+                showToast(`${field} updated successfully!`, 'success');
+                return true;
+            } catch (err) {
+                console.error('Error saving field:', err);
+                showToast('Failed to save. Please try again.', 'error');
+                return false;
+            }
+        }
+
+        // ─── Enter edit mode ────────────────────────────────
+        function enterEditMode(fieldGroup, currentValue) {
+            if (fieldGroup.classList.contains('edit-mode')) return;
+
+            const fieldValue = fieldGroup.querySelector('.field-value');
+            const label = fieldGroup.querySelector('label')?.textContent || field;
+
+            let inputHtml = '';
+            if (field === 'gender') {
+                inputHtml = `
+                        <select id="edit-input-${field}">
+                            <option value="male" ${currentValue === 'male' ? 'selected' : ''}>Male</option>
+                            <option value="female" ${currentValue === 'female' ? 'selected' : ''}>Female</option>
+                            <option value="other" ${currentValue === 'other' ? 'selected' : ''}>Other</option>
+                            <option value="prefer-not-to-say" ${currentValue === 'prefer-not-to-say' ? 'selected' : ''}>Prefer not to say</option>
+                        </select>
+                    `;
+            } else if (field === 'age') {
+                inputHtml = `
+                        <input type="number" id="edit-input-${field}" value="${currentValue !== '—' ? currentValue : ''}" min="13" max="120" placeholder="Enter age" />
+                    `;
+            } else {
+                inputHtml = `
+                        <input type="text" id="edit-input-${field}" value="${currentValue !== '—' ? currentValue : ''}" placeholder="Enter ${label.toLowerCase()}" />
+                    `;
+            }
+
+            const displayValue = fieldValue.querySelector('.value');
+            const editBtn = fieldValue.querySelector('.edit-btn');
+
+            fieldValue.innerHTML = `
+                    ${inputHtml}
+                    <div class="action-btns">
+                        <button class="save-btn" data-field="${field}">Save</button>
+                        <button class="cancel-btn">Cancel</button>
+                    </div>
+                `;
+
+            fieldGroup.classList.add('edit-mode');
+
+            const input = fieldValue.querySelector('input, select');
+            if (input) {
+                setTimeout(() => input.focus(), 50);
+                if (input.tagName === 'INPUT' && input.type !== 'number') {
+                    input.setSelectionRange(input.value.length, input.value.length);
+                }
+            }
+
+            const saveBtn = fieldValue.querySelector('.save-btn');
+            saveBtn.addEventListener('click', async () => {
+                const inputEl = fieldValue.querySelector('input, select');
+                let newValue = inputEl ? inputEl.value.trim() : '';
+                if (field === 'age') {
+                    const num = parseInt(newValue, 10);
+                    if (isNaN(num) || num < 13 || num > 120) {
+                        showToast('Please enter a valid age (13–120).', 'error');
+                        return;
+                    }
+                    newValue = num;
+                }
+                if (field === 'gender' && !newValue) {
+                    showToast('Please select a gender.', 'error');
+                    return;
+                }
+                if ((field === 'firstName' || field === 'lastName' || field === 'displayName') && !newValue) {
+                    showToast('This field cannot be empty.', 'error');
+                    return;
+                }
+
+                const success = await saveField(field, newValue);
+                if (!success) {
+                    exitEditMode(fieldGroup);
+                }
+            });
+
+            const cancelBtn = fieldValue.querySelector('.cancel-btn');
+            cancelBtn.addEventListener('click', () => {
+                exitEditMode(fieldGroup);
+            });
+
+            const inputEl = fieldValue.querySelector('input, select');
+            if (inputEl) {
+                inputEl.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        saveBtn.click();
+                    }
+                    if (e.key === 'Escape') {
+                        e.preventDefault();
+                        cancelBtn.click();
+                    }
+                });
+            }
+        }
+
+        function exitEditMode(fieldGroup) {
+            fieldGroup.classList.remove('edit-mode');
+            renderProfile(userData);
+        }
+
+        // ─── Attach edit buttons ─────────────────────────────
+        function attachEditButtons() {
+            document.querySelectorAll('.edit-btn').forEach((btn) => {
+                btn.removeEventListener('click', handleEditClick);
+                btn.addEventListener('click', handleEditClick);
+            });
+        }
+
+        function handleEditClick(e) {
+            const btn = e.currentTarget;
+            const field = btn.dataset.target;
+            const fieldGroup = btn.closest('.field-group');
+            if (!fieldGroup) return;
+
+            const valueEl = fieldGroup.querySelector('.value');
+            const currentValue = valueEl ? valueEl.textContent : '';
+
+            enterEditMode(fieldGroup, currentValue);
+        }
+
+        // ─── Auth state ──────────────────────────────────────
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                loadingEl.style.display = 'block';
+                contentEl.style.display = 'none';
+                await fetchUserData(user);
+                attachEditButtons();
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+
+        // ─── Logout ──────────────────────────────────────────
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+                window.location.href = 'login.html';
+            } catch (err) {
+                console.error('Logout error:', err);
+                showToast('Error signing out.', 'error');
+            }
+        });
+
+        // ─── Emergency Support ──────────────────────────────
+        document.getElementById('emergency-btn').addEventListener('click', () => {
+            alert('🚨 Emergency Support\n\nIf you are experiencing a medical emergency, please call 911 immediately.\n\nFor non-emergency support, contact your healthcare provider.');
+        });
+
+        // ─── Re-attach edit buttons after any re-render ─────
+        const observer = new MutationObserver(() => {
+            attachEditButtons();
+        });
+        observer.observe(contentEl, { childList: true, subtree: true });
+
+        const originalRender = renderProfile;
+        renderProfile = function(data) {
+            originalRender(data);
+            attachEditButtons();
+        };
+
+        console.log('⚙️ PulseGuard Settings ready.');
+    </script>
+</body>
+</html>

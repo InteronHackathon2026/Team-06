@@ -1,0 +1,2575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PulseGuard— Live Monitor</title>
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js">
+    </script>
+    <script type="importmap">
+        {
+            "imports": {
+                "firebase/app": "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js",
+                "firebase/vertexai": "https://www.gstatic.com/firebasejs/10.12.0/firebase-vertexai.js"
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        :root {
+            --bg: #F8FAFC;
+            --surface: #FFFFFF;
+            --surface-soft: #F1F5F9;
+            --border: #E2E8F0;
+            --blue-deep: #1E40AF;
+            --blue-mid: #3B82F6;
+            --blue-light: #60A5FA;
+            --blue-ghost: #EFF6FF;
+            --text-primary: #0F172A;
+            --text-secondary: #475569;
+            --text-muted: #94A3B8;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --error: #EF4444;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.15);
+            --sidebar-width: 240px;
+            --ai-sidebar-width: 300px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            color: var(--text-primary);
+            line-height: 1.5;
+            display: flex;
+        }
+
+        /* Left Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 10;
+            overflow-y: auto;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 40px;
+        }
+
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--blue-ghost);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--blue-mid);
+        }
+
+        .brand-text h1 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+        }
+
+        .brand-text span {
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .nav-menu {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .nav-item:hover {
+            background: var(--surface-soft);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: var(--blue-ghost);
+            color: var(--blue-mid);
+            font-weight: 600;
+        }
+
+       
+
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+        }
+
+        .logout-btn:hover {
+            background: var(--surface-soft);
+            color: var(--text-primary);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            margin-right: var(--ai-sidebar-width);
+            padding: 32px 40px;
+            max-width: 1400px;
+            transition: margin-right 0.3s;
+        }
+
+        /* AI Sidebar (Right) */
+        .ai-sidebar {
+            width: var(--ai-sidebar-width);
+            background: var(--surface);
+            border-left: 1px solid var(--border);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: fixed;
+            right: 0;
+            top: 0;
+            z-index: 10;
+            overflow-y: auto;
+        }
+
+        .ai-sidebar-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .ai-sidebar-header h2 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ai-sidebar-header .ai-badge {
+            font-size: 10px;
+            background: var(--blue-ghost);
+            color: var(--blue-mid);
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .ai-insights-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .insight-card {
+            background: var(--surface-soft);
+            border-radius: var(--radius-sm);
+            padding: 14px 16px;
+            border-left: 4px solid var(--blue-mid);
+            transition: all 0.2s;
+            animation: slideIn 0.4s ease;
+        }
+
+        .insight-card.priority-1 {
+            border-left-color: var(--error);
+            background: #FEF2F2;
+        }
+        .insight-card.priority-2 {
+            border-left-color: var(--warning);
+            background: #FFFBEB;
+        }
+        .insight-card.priority-3 {
+            border-left-color: var(--blue-mid);
+            background: var(--blue-ghost);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .insight-card .insight-time {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .insight-card .insight-text {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin: 4px 0;
+            line-height: 1.5;
+        }
+
+        .insight-card .insight-detail {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        .insight-card .insight-metrics {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+
+        .insight-card .metric-tag {
+            font-size: 11px;
+            background: var(--surface);
+            padding: 2px 10px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .insight-empty {
+            color: var(--text-muted);
+            font-size: 14px;
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        /* Recording Controls */
+        .recording-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background: var(--surface);
+            padding: 6px 12px 6px 16px;
+            border-radius: 40px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            transition: all 0.3s;
+        }
+
+        .recording-controls.recording-active {
+            border-color: var(--error);
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+        }
+
+        .recording-timer {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            font-variant-numeric: tabular-nums;
+            min-width: 64px;
+            letter-spacing: 0.5px;
+            font-family: 'DM Serif Display', serif;
+        }
+
+        .recording-timer.recording {
+            color: var(--error);
+        }
+
+        .btn-record {
+            padding: 8px 22px;
+            border: none;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: 0.3px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-record::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.2);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .btn-record:hover:not(:disabled)::after {
+            opacity: 1;
+        }
+
+        .btn-record:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+
+        .btn-record.start {
+            background: linear-gradient(135deg, #10B981, #059669);
+            color: white;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
+        }
+
+        .btn-record.start:hover:not(:disabled) {
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.45);
+            transform: translateY(-1px);
+        }
+
+        .btn-record.start:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-record.stop-btn {
+            background: linear-gradient(135deg, #EF4444, #DC2626);
+            color: white;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.35);
+        }
+
+        .btn-record.stop-btn:hover:not(:disabled) {
+            box-shadow: 0 4px 16px rgba(239, 68, 68, 0.45);
+            transform: translateY(-1px);
+        }
+
+        .btn-record.stop-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-record .icon {
+            font-size: 16px;
+            line-height: 1;
+        }
+
+        .recording-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--error);
+            padding-left: 4px;
+        }
+
+        .recording-indicator .pulse-dot {
+            width: 10px;
+            height: 10px;
+            background: var(--error);
+            border-radius: 50%;
+            animation: pulse-red 1s infinite;
+        }
+
+        @keyframes pulse-red {
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.3;
+                transform: scale(1.4);
+            }
+        }
+
+        .recording-status-text {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-left: 2px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            transition: all 0.2s;
+        }
+
+        .stat-card:hover {
+            box-shadow: var(--shadow);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-family: 'DM Serif Display', serif;
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .stat-value.waiting {
+            color: var(--text-muted);
+            font-size: 20px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 400;
+        }
+
+        .stat-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .stat-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .stat-badge.good {
+            background: #ECFDF5;
+            color: var(--success);
+        }
+
+        .stat-badge.warning {
+            background: #FEF3C7;
+            color: var(--warning);
+        }
+
+        .stat-badge.bad {
+            background: #FEE2E2;
+            color: var(--error);
+        }
+
+        .stat-badge.waiting-badge {
+            background: var(--surface-soft);
+            color: var(--text-muted);
+        }
+
+        /* Charts Section */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .chart-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .chart-container {
+            height: 200px;
+            position: relative;
+            background: var(--surface-soft);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+        }
+
+        .chart-container .chart-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-muted);
+            font-size: 14px;
+            font-weight: 400;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .header-content h2 {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .header-content p {
+            color: var(--text-secondary);
+            font-size: 15px;
+            max-width: 600px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .connection-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--blue-ghost);
+            color: var(--blue-mid);
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            border: 1px solid transparent;
+        }
+
+        .connection-badge.disconnected {
+            background: #FEF3C7;
+            color: var(--warning);
+        }
+
+        .connection-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .btn-connect {
+            padding: 8px 20px;
+            background: var(--blue-mid);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s;
+            font-size: 13px;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-connect:hover:not(:disabled) {
+            background: var(--blue-deep);
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn-connect:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-connect.disconnect {
+            background: var(--surface);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            box-shadow: none;
+        }
+
+        .btn-connect.disconnect:hover:not(:disabled) {
+            background: var(--surface-soft);
+            box-shadow: var(--shadow);
+        }
+
+        /* Recording Prompt Overlay */
+        .recording-prompt-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(6px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .recording-prompt-overlay.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.96);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .recording-prompt-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 40px 48px;
+            max-width: 480px;
+            width: 90%;
+            box-shadow: var(--shadow-lg);
+            text-align: center;
+        }
+
+        .recording-prompt-card h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .recording-prompt-card p {
+            color: var(--text-secondary);
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .recording-prompt-card .btn-start-recording {
+            background: linear-gradient(135deg, #10B981, #059669);
+            color: white;
+            border: none;
+            padding: 14px 40px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s;
+            box-shadow: 0 2px 12px rgba(16, 185, 129, 0.35);
+        }
+
+        .recording-prompt-card .btn-start-recording:hover:not(:disabled) {
+            box-shadow: 0 4px 24px rgba(16, 185, 129, 0.45);
+            transform: translateY(-2px);
+        }
+
+        .recording-prompt-card .btn-start-recording:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .recording-prompt-card .btn-cancel-recording {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            padding: 14px 40px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .recording-prompt-card .btn-cancel-recording:hover {
+            background: var(--surface-soft);
+        }
+
+        .recording-prompt-card .prompt-actions {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        /* ===== RESULTS MODAL ===== */
+        .results-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.4s ease;
+            padding: 20px;
+        }
+
+        .results-overlay.active {
+            display: flex;
+        }
+
+        .results-card {
+            background: var(--surface);
+            border-radius: 20px;
+            padding: 40px 48px;
+            max-width: 680px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px) scale(0.96);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .results-card .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--surface-soft);
+        }
+
+        .results-card .results-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .results-card .results-header h2 .check {
+            color: var(--success);
+        }
+
+        .results-card .results-close {
+            background: var(--surface-soft);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+        }
+
+        .results-card .results-close:hover {
+            background: #FEE2E2;
+            color: var(--error);
+        }
+
+        .results-card .results-duration {
+            text-align: center;
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            padding: 8px 16px;
+            background: var(--surface-soft);
+            border-radius: 20px;
+            display: inline-block;
+            font-weight: 500;
+        }
+
+        .results-card .results-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .results-card .result-stat {
+            background: var(--surface-soft);
+            padding: 14px 18px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+        }
+
+        .results-card .result-stat .label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .results-card .result-stat .value {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-primary);
+            font-family: 'DM Serif Display', serif;
+            margin-top: 2px;
+        }
+
+        .results-card .result-stat .value.small {
+            font-size: 18px;
+        }
+
+        .results-card .results-insights-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 16px 0 12px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .results-card .results-insights-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .results-card .results-insights-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .results-card .results-insights-list::-webkit-scrollbar-track {
+            background: var(--surface-soft);
+            border-radius: 4px;
+        }
+        .results-card .results-insights-list::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        .results-card .result-insight-item {
+            background: var(--surface-soft);
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            border-left: 4px solid var(--blue-mid);
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--text-secondary);
+        }
+
+        .results-card .result-insight-item.priority-1 {
+            border-left-color: var(--error);
+            background: #FEF2F2;
+        }
+        .results-card .result-insight-item.priority-2 {
+            border-left-color: var(--warning);
+            background: #FFFBEB;
+        }
+        .results-card .result-insight-item.priority-3 {
+            border-left-color: var(--blue-mid);
+            background: var(--blue-ghost);
+        }
+
+        .results-card .result-insight-item .insight-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .results-card .results-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 2px solid var(--surface-soft);
+            flex-wrap: wrap;
+        }
+
+        .results-card .btn-results-close {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.25s;
+            background: var(--surface-soft);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            min-width: 120px;
+        }
+
+        .results-card .btn-results-close:hover {
+            background: var(--surface);
+            box-shadow: var(--shadow);
+        }
+
+        .results-card .btn-save-session {
+            flex: 2;
+            padding: 12px;
+            border: none;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.25s;
+            background: linear-gradient(135deg, #3B82F6, #1E40AF);
+            color: white;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+            min-width: 160px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .results-card .btn-save-session:hover {
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .results-card .btn-save-session .icon {
+            font-size: 18px;
+        }
+
+        /* Data hidden state */
+        .data-hidden .stat-value,
+        .data-hidden .stat-subtitle,
+        .data-hidden .stat-badge,
+        .data-hidden .chart-container canvas,
+        .data-hidden .final-results-banner {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .data-placeholder {
+            color: var(--text-muted);
+            font-size: 13px;
+            font-weight: 400;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            .ai-sidebar {
+                width: 260px;
+            }
+            .main-content {
+                margin-right: 260px;
+            }
+            :root {
+                --ai-sidebar-width: 260px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .ai-sidebar {
+                display: none;
+            }
+            .main-content {
+                margin-right: 0;
+            }
+            :root {
+                --ai-sidebar-width: 0px;
+            }
+            .results-card {
+                padding: 28px 24px;
+            }
+            .results-card .results-stats {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+                padding: 24px 12px;
+            }
+            .brand-text,
+            .nav-text {
+                display: none;
+            }
+            .main-content {
+                margin-left: 70px;
+                padding: 24px;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            .header-actions {
+                flex-direction: column;
+                align-items: stretch;
+                width: 100%;
+            }
+            .recording-controls {
+                flex-wrap: wrap;
+                justify-content: center;
+                border-radius: 16px;
+                padding: 10px 16px;
+            }
+            .recording-prompt-card {
+                padding: 28px 24px;
+            }
+            .recording-prompt-card .prompt-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+            .recording-prompt-card .btn-cancel-recording {
+                margin-left: 0;
+            }
+            .results-card .results-stats {
+                grid-template-columns: 1fr 1fr;
+            }
+            .results-card {
+                padding: 24px 16px;
+            }
+            .results-card .results-actions {
+                flex-direction: column;
+            }
+            .results-card .btn-save-session,
+            .results-card .btn-results-close {
+                flex: none;
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .results-card .results-stats {
+                grid-template-columns: 1fr;
+            }
+            .recording-controls {
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+            .btn-record {
+                padding: 6px 14px;
+                font-size: 12px;
+            }
+        }
+
+        /* Scrollbar */
+        .ai-sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .ai-sidebar::-webkit-scrollbar-track {
+            background: var(--surface-soft);
+        }
+        .ai-sidebar::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        /* Recording active glow on main content */
+        .main-content.recording-active {
+            position: relative;
+        }
+
+        .main-content.recording-active::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            right: var(--ai-sidebar-width);
+            height: 3px;
+            background: linear-gradient(90deg, var(--error), #F87171, var(--error));
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: -200% 0;
+            }
+            100% {
+                background-position: 200% 0;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .main-content.recording-active::before {
+                right: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content.recording-active::before {
+                left: 70px;
+            }
+        }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--text-primary);
+            color: white;
+            padding: 14px 24px;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: var(--shadow-lg);
+            z-index: 3000;
+            transform: translateY(80px);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+        }
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .toast.success {
+            background: var(--success);
+        }
+        .toast.error {
+            background: var(--error);
+        }
+        .toast.info {
+            background: var(--blue-mid);
+        }
+    </style>
+</head>
+<body>
+    <!-- Left Sidebar -->
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-icon">P</div>
+            <div class="brand-text">
+                <h1>PulseGuard</h1>
+                <span>
+                    <span class="status-dot" id="device-status-dot" style="display:none;"></span>
+                    <span id="device-status-text">Device Active</span>
+                </span>
+            </div>
+        </div>
+
+        <nav class="nav-menu">
+            <a href="dashboard.html" class="nav-item active">
+                <span>Dashboard</span>
+            </a>
+            <a href="reports.html" class="nav-item">
+                <span>Reports</span>
+            </a>
+            <a href="settings.html" class="nav-item">
+                <span>Settings</span>
+            </a>
+        </nav>
+
+      
+
+        <button class="logout-btn" onclick="logout()">
+            <span>Logout</span>
+        </button>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content" id="main-content">
+        <div class="header">
+            <div class="header-content">
+                <h2>Real-Time Cardiac Health Monitoring</h2>
+                <p>Continuous heart rate tracking, physiological stress analysis, and GSR streaming from your wearable device.</p>
+            </div>
+            <div class="header-actions">
+                <!-- Model Status -->
+                <div class="connection-badge" id="model-status-badge" style="background: #FEF3C7; color: #D97706; border-color: #FDE68A;">
+                    <span class="connection-dot" style="background: #D97706; animation: pulse 2s infinite;"></span>
+                    <span id="model-status-text">Loading model...</span>
+                </div>
+
+                <div class="connection-badge disconnected" id="connection-badge">
+                    <span class="connection-dot"></span>
+                    <span>Disconnected</span>
+                </div>
+
+                <!-- Recording Controls -->
+                <div class="recording-controls" id="recording-controls">
+                    <span class="recording-timer" id="recording-timer">00:00</span>
+                    <button class="btn-record start" id="start-record-btn" onclick="startRecording()" disabled>
+                        <span class="icon">▶</span> Start
+                    </button>
+                    <button class="btn-record stop-btn" id="stop-record-btn" onclick="stopRecording()" disabled>
+                        <span class="icon">■</span> End
+                    </button>
+                    <span class="recording-indicator" id="recording-indicator" style="display:none;">
+                        <span class="pulse-dot"></span>
+                        <span class="recording-status-text">Recording</span>
+                    </span>
+                </div>
+
+                <button class="btn-connect" id="connect-button" onclick="connectToDevice()">
+                    Connect Device
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid" id="stats-grid">
+            <div class="stat-card" id="bpm-card">
+                <div class="stat-header">
+                    <span class="stat-label">Heart Rate</span>
+                </div>
+                <div class="stat-value" id="bpm-value">--</div>
+                <div class="stat-subtitle">BPM</div>
+               
+            </div>
+
+            <div class="stat-card" id="avg-bpm-card">
+                <div class="stat-header">
+                    <span class="stat-label">Average BPM (1 min)</span>
+                </div>
+                <div class="stat-value" id="avg-bpm-value">--</div>
+                
+                <span class="stat-badge waiting-badge" id="avg-bpm-badge" style="display:none;">Waiting</span>
+            </div>
+
+            <div class="stat-card" id="stress-card">
+                <div class="stat-header">
+                    <span class="stat-label">Stress Level</span>
+                </div>
+                <div class="stat-value" id="stress-value" style="font-size: 20px;">--</div>
+                <div class="stat-subtitle" id="stress-unit">Waiting for data...</div>
+                <span class="stat-badge waiting-badge" id="stress-badge" style="display:none;">Waiting</span>
+            </div>
+
+            <div class="stat-card" id="ai-card">
+                <div class="stat-header">
+                    <span class="stat-label">AI Prediction</span>
+                </div>
+                <div class="stat-value" id="ai-value" style="font-size: 20px;">--</div>
+                <div class="stat-subtitle" id="ai-subtitle">Waiting for model...</div>
+                <span class="stat-badge waiting-badge" id="ai-badge" style="display:none;">Waiting</span>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Real-time Heart Rate</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="bpmChart"></canvas>
+                    <div class="chart-placeholder" id="bpm-placeholder" style="display:flex; align-items:center; justify-content:center; height:100%; color:var(--text-muted); font-size:14px;">
+                        Start recording to view data
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Raw GSR Values</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="gsrChart"></canvas>
+                    <div class="chart-placeholder" id="gsr-placeholder" style="display:flex; align-items:center; justify-content:center; height:100%; color:var(--text-muted); font-size:14px;">
+                        Start recording to view data
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- AI Sidebar (Right) -->
+    <aside class="ai-sidebar" id="ai-sidebar">
+        <div class="ai-sidebar-header">
+            <h2>
+                AI Insights
+                <span class="ai-badge">Live</span>
+            </h2>
+        </div>
+        <div class="ai-insights-container" id="ai-insights-container">
+            <div class="insight-empty" id="insight-empty">
+                <p style="font-size:32px; margin-bottom:8px;">🧠</p>
+                <p>AI will analyze your data every 90 seconds.</p>
+                <p style="font-size:12px; color:var(--text-muted); margin-top:4px;">Start recording to begin analysis.</p>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Recording Prompt Overlay -->
+    <div class="recording-prompt-overlay" id="recording-prompt-overlay">
+        <div class="recording-prompt-card">
+            <h2>Start Recording</h2>
+            <p>Your device is connected. Begin recording to view live cardiac data, AI predictions, and physiological insights.</p>
+            <div class="prompt-actions">
+                <button class="btn-start-recording" id="prompt-start-btn" onclick="startRecordingFromPrompt()">Start Recording</button>
+                <button class="btn-cancel-recording" onclick="dismissPrompt()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== RESULTS MODAL (with Save button) ===== -->
+    <div class="results-overlay" id="results-overlay">
+        <div class="results-card">
+            <div class="results-header">
+                <h2><span class="check">📊</span> Session Summary</h2>
+                <button class="results-close" onclick="closeResults()">✕</button>
+            </div>
+            <div style="text-align:center;">
+                <span class="results-duration" id="results-duration">⏱ 00:00</span>
+            </div>
+            <div class="results-stats" id="results-stats">
+                <div class="result-stat">
+                    <div class="label">Avg Heart Rate</div>
+                    <div class="value" id="results-avg-bpm">--</div>
+                </div>
+                <div class="result-stat">
+                    <div class="label">Stress Status</div>
+                    <div class="value small" id="results-stress">--</div>
+                </div>
+                <div class="result-stat">
+                    <div class="label">Avg GSR</div>
+                    <div class="value" id="results-gsr">--</div>
+                </div>
+                <div class="result-stat">
+                    <div class="label">AI Prediction</div>
+                    <div class="value small" id="results-ai">--</div>
+                </div>
+            </div>
+            <div class="results-insights-title">🧠 Top Insights</div>
+            <div class="results-insights-list" id="results-insights-list">
+                <div style="color:var(--text-muted); text-align:center; padding:16px 0; font-size:14px;">
+                    No insights available.
+                </div>
+            </div>
+            <div class="results-actions">
+                <button class="btn-results-close" onclick="closeResults()">Close Summary</button>
+                <button class="btn-save-session" onclick="saveAndGoToReports()">
+                    <span class="icon">💾</span> Save Session &amp; View Reports
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ============================================
+        // ONNX Model Configuration
+        // ============================================
+        const labelMap = ["Normal", "High Risk"];
+        const HR_TRAINING_MEAN = 97.3935;
+        const HR_TRAINING_STD = 29.835359185872054;
+
+        let onnxSession = null;
+
+        // ============================================
+        // Firebase AI Configuration
+        // ============================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyDemoKeyReplaceMe",
+            authDomain: "your-project.firebaseapp.com",
+            projectId: "your-project-id",
+            storageBucket: "your-project.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef"
+        };
+
+        let firebaseInitialized = false;
+        let generativeModel = null;
+        let aiAnalysisInterval = null;
+
+        // ============================================
+        // Recording State
+        // ============================================
+        let isRecording = false;
+        let recordingStartTime = null;
+        let recordingTimerInterval = null;
+        let recordedBpmData = [];
+        let recordedGsrData = [];
+        let recordedStressData = [];
+        let recordedTimestamps = [];
+        let aiInsights = [];
+        let insightCounter = 0;
+
+        // 1-minute rolling window for BPM
+        let bpmRollingWindow = [];
+
+        // Store current session data for saving
+        let currentSessionData = null;
+
+        // ============================================
+        // Web Bluetooth API Implementation
+        // ============================================
+        const SERVICE_UUID = '0000180d-0000-1000-8000-00805f9b34fb';
+        const BPM_CHAR_UUID = '00002a37-0000-1000-8000-00805f9b34fb';
+        const STRESS_CHAR_UUID = '00002a06-0000-1000-8000-00805f9b34fb';
+        const GSR_CHAR_UUID = '12345678-1234-5678-1234-56789abcdef0';
+
+        let bluetoothDevice;
+        let server;
+        let service;
+        let bpmCharacteristic;
+        let stressCharacteristic;
+        let gsrCharacteristic;
+        let connectionState = 'disconnected';
+
+        let bpmData = [];
+        let gsrData = [];
+        let maxDataPoints = 100;
+
+        let bpmCtx, gsrCtx;
+
+        // DOM Elements
+        const connectButton = document.getElementById('connect-button');
+        const connectionBadge = document.getElementById('connection-badge');
+        const deviceStatusDot = document.getElementById('device-status-dot');
+        const deviceStatusText = document.getElementById('device-status-text');
+
+        const bpmValue = document.getElementById('bpm-value');
+        const avgBpmValue = document.getElementById('avg-bpm-value');
+        const avgBpmBadge = document.getElementById('avg-bpm-badge');
+        const bpmBadge = document.getElementById('bpm-badge');
+        const stressValue = document.getElementById('stress-value');
+        const stressUnit = document.getElementById('stress-unit');
+        const stressBadge = document.getElementById('stress-badge');
+        const aiValue = document.getElementById('ai-value');
+        const aiSubtitle = document.getElementById('ai-subtitle');
+        const aiBadge = document.getElementById('ai-badge');
+
+        const startRecordBtn = document.getElementById('start-record-btn');
+        const stopRecordBtn = document.getElementById('stop-record-btn');
+        const recordingIndicator = document.getElementById('recording-indicator');
+        const recordingTimer = document.getElementById('recording-timer');
+        const recordingControls = document.getElementById('recording-controls');
+        const mainContent = document.getElementById('main-content');
+
+        const insightsContainer = document.getElementById('ai-insights-container');
+        const insightEmpty = document.getElementById('insight-empty');
+
+        const promptOverlay = document.getElementById('recording-prompt-overlay');
+        const promptStartBtn = document.getElementById('prompt-start-btn');
+
+        const bpmPlaceholder = document.getElementById('bpm-placeholder');
+        const gsrPlaceholder = document.getElementById('gsr-placeholder');
+
+        // Results Modal
+        const resultsOverlay = document.getElementById('results-overlay');
+        const resultsDuration = document.getElementById('results-duration');
+        const resultsAvgBpm = document.getElementById('results-avg-bpm');
+        const resultsStress = document.getElementById('results-stress');
+        const resultsGsr = document.getElementById('results-gsr');
+        const resultsAi = document.getElementById('results-ai');
+        const resultsInsightsList = document.getElementById('results-insights-list');
+
+        // Toast
+        const toast = document.getElementById('toast');
+
+        // ============================================
+        // Toast Helper
+        // ============================================
+        function showToast(message, type = 'success') {
+            toast.textContent = message;
+            toast.className = `toast ${type}`;
+            toast.classList.add('show');
+            clearTimeout(toast._hideTimer);
+            toast._hideTimer = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2800);
+        }
+
+        // ============================================
+        // Auto-Load ONNX Model
+        // ============================================
+        async function autoLoadModel() {
+            try {
+                document.getElementById('model-status-text').textContent = 'Loading model...';
+                const response = await fetch('heartrate.onnx');
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const arrayBuffer = await response.arrayBuffer();
+                onnxSession = await ort.InferenceSession.create(arrayBuffer);
+
+                const badge = document.getElementById('model-status-badge');
+                badge.style.background = '#ECFDF5';
+                badge.style.color = '#10B981';
+                badge.style.borderColor = '#A7F3D0';
+                badge.querySelector('.connection-dot').style.background = '#10B981';
+                badge.querySelector('.connection-dot').style.animation = 'none';
+                document.getElementById('model-status-text').textContent = 'Model Loaded';
+
+               
+                aiBadge.textContent = 'Ready';
+                aiBadge.className = 'stat-badge good';
+                aiBadge.style.display = 'inline-flex';
+
+                console.log('ONNX model loaded.');
+            } catch (error) {
+                console.error('Failed to load ONNX model:', error);
+                const badge = document.getElementById('model-status-badge');
+                badge.style.background = '#FEE2E2';
+                badge.style.color = '#EF4444';
+                badge.style.borderColor = '#FECACA';
+                badge.querySelector('.connection-dot').style.background = '#EF4444';
+                badge.querySelector('.connection-dot').style.animation = 'none';
+                document.getElementById('model-status-text').textContent = 'Load Failed';
+                aiSubtitle.textContent = 'Failed to load model';
+                aiBadge.textContent = 'Error';
+                aiBadge.className = 'stat-badge bad';
+                aiBadge.style.display = 'inline-flex';
+            }
+        }
+
+        // ============================================
+        // Firebase AI Initialization
+        // ============================================
+        async function initFirebaseAI() {
+            try {
+                const { initializeApp } = await import('firebase/app');
+                const { getVertexAI, getGenerativeModel } = await import('firebase/vertexai');
+
+                if (firebaseConfig.apiKey === 'AIzaSyDemoKeyReplaceMe') {
+                    console.warn('Firebase not configured. Using fallback AI.');
+                    return false;
+                }
+
+                const app = initializeApp(firebaseConfig);
+                const vertexAI = getVertexAI(app);
+                generativeModel = getGenerativeModel(vertexAI, { model: 'gemini-1.5-flash' });
+                firebaseInitialized = true;
+                console.log('Firebase AI initialized.');
+                return true;
+            } catch (error) {
+                console.error('Firebase AI init failed:', error);
+                return false;
+            }
+        }
+
+        // ============================================
+        // Compute 1-minute average BPM
+        // ============================================
+        function computeOneMinuteAvg() {
+            const now = Date.now();
+            const cutoff = now - 60000;
+            const recent = bpmRollingWindow.filter(item => item.timestamp >= cutoff);
+            if (recent.length === 0) return null;
+            const sum = recent.reduce((acc, item) => acc + item.value, 0);
+            return sum / recent.length;
+        }
+
+        // ============================================
+        // AI Analysis Function - runs every 90s
+        // Generates exactly 1 insight per cycle.
+        // ============================================
+        async function runAIAnalysis() {
+            if (!isRecording) return;
+
+            if (recordedBpmData.length < 5) {
+                addInsight(
+                    'Collecting initial data samples',
+                    'Please wait while the system gathers enough readings for a meaningful analysis.',
+                    3
+                );
+                return;
+            }
+
+            const recentBpm = recordedBpmData.slice(-30);
+            const recentGsr = recordedGsrData.slice(-30);
+            const avgBpm = recentBpm.length > 0 ? recentBpm.reduce((a, b) => a + b, 0) / recentBpm.length : 0;
+            const avgGsr = recentGsr.length > 0 ? recentGsr.reduce((a, b) => a + b, 0) / recentGsr.length : 0;
+            const oneMinAvg = computeOneMinuteAvg();
+
+            const stressValues = recordedStressData.slice(-5);
+            const mostCommonStress = stressValues.length > 0 ?
+                stressValues.sort((a, b) =>
+                    stressValues.filter(v => v === a).length -
+                    stressValues.filter(v => v === b).length
+                ).pop() :
+                'UNKNOWN';
+
+            let aiPrediction = 'Unknown';
+            if (onnxSession && recordedBpmData.length > 0) {
+                try {
+                    const latestBpm = recordedBpmData[recordedBpmData.length - 1];
+                    const normalizedBpm = (latestBpm - HR_TRAINING_MEAN) / HR_TRAINING_STD;
+                    const inputName = onnxSession.inputNames[0];
+                    const tensor = new ort.Tensor('float32', [normalizedBpm], [1, 1]);
+                    const results = await onnxSession.run({ [inputName]: tensor });
+                    const outputName = onnxSession.outputNames[0];
+                    const outputData = results[outputName].data;
+                    let maxIndex = 0,
+                        maxValue = outputData[0];
+                    for (let i = 1; i < outputData.length; i++) {
+                        if (outputData[i] > maxValue) { maxValue = outputData[i];
+                            maxIndex = i; }
+                    }
+                    aiPrediction = labelMap[maxIndex] || `Class ${maxIndex}`;
+                } catch (e) { /* ignore */ }
+            }
+
+            const prompt = `
+                You are a cardiac health AI assistant. Provide exactly 1 detailed, actionable insight based on this physiological data.
+                Data:
+                - Average heart rate (last 30s): ${avgBpm.toFixed(1)} BPM
+                - 1-minute average heart rate: ${oneMinAvg !== null ? oneMinAvg.toFixed(1) : 'N/A'} BPM
+                - Average GSR (last 30s): ${avgGsr.toFixed(1)}
+                - Most recent stress level: ${mostCommonStress}
+                - AI model prediction: ${aiPrediction}
+
+                For the insight:
+                1. State the observation clearly.
+                2. Explain what it means physiologically.
+                3. Provide a specific recommendation.
+
+                Respond in JSON format: { "insight": "your single insight here" }
+                Make the insight clinically relevant, specific, and actionable.
+            `;
+
+            let insightText = null;
+            let usedFallback = false;
+
+            if (firebaseInitialized && generativeModel) {
+                try {
+                    const result = await generativeModel.generateContent(prompt);
+                    const text = result.response.text();
+                    const jsonMatch = text.match(/\{[\s\S]*\}/);
+                    if (jsonMatch) {
+                        const parsed = JSON.parse(jsonMatch[0]);
+                        if (parsed.insight && typeof parsed.insight === 'string') {
+                            insightText = parsed.insight.trim();
+                        } else if (parsed.insights && Array.isArray(parsed.insights) && parsed.insights.length > 0) {
+                            insightText = parsed.insights[0].trim();
+                        }
+                    }
+                    if (!insightText || insightText.length < 10) {
+                        const lines = text.split('\n').filter(l => l.trim().length > 15);
+                        if (lines.length > 0) {
+                            insightText = lines[0].trim();
+                        }
+                    }
+                    if (!insightText) throw new Error('No insight parsed');
+                } catch (error) {
+                    console.warn('Gemini analysis failed, using fallback:', error);
+                    usedFallback = true;
+                }
+            }
+
+            if (!insightText || usedFallback) {
+                insightText = generateFallbackInsight(avgBpm, oneMinAvg, avgGsr, mostCommonStress, aiPrediction);
+            }
+
+            const metrics = [
+                `Heart rate: ${avgBpm.toFixed(0)} BPM`,
+                `1-min avg: ${oneMinAvg !== null ? oneMinAvg.toFixed(0) : 'N/A'} BPM`,
+                `Stress: ${mostCommonStress}`,
+                `GSR: ${avgGsr.toFixed(0)}`
+            ];
+
+            addInsight(insightText, metrics.join('  |  '), 1);
+        }
+
+        // ============================================
+        // Fallback: generate exactly 1 insight
+        // ============================================
+        function generateFallbackInsight(avgBpm, oneMinAvg, avgGsr, stress, prediction) {
+            const displayAvg = oneMinAvg !== null ? oneMinAvg : avgBpm;
+            let insight = '';
+
+            const isHighStress = stress === 'HIGH STRESS';
+            const isElevatedBpm = displayAvg > 100;
+            const isLowBpm = displayAvg < 55;
+            const isHighGsr = avgGsr > 500;
+            const isLowGsr = avgGsr < 100;
+            const isHighRisk = prediction === 'High Risk';
+
+            if (isHighRisk) {
+                insight =
+                    `⚠️ AI model flags elevated cardiac risk based on current heart rate pattern (${displayAvg.toFixed(0)} BPM). This is a precautionary alert — monitor for chest pain, shortness of breath, or severe dizziness. Consult a healthcare provider if symptoms persist.`;
+            } else if (isElevatedBpm) {
+                insight =
+                    `Heart rate is elevated at ${displayAvg.toFixed(0)} BPM over the last minute. This may indicate physiological stress, physical exertion, or anxiety. Try slow, deep breathing for 2 minutes and ensure you're hydrated. If this persists, consult a healthcare professional.`;
+            } else if (isLowBpm) {
+                insight =
+                    `Lower than average heart rate (${displayAvg.toFixed(0)} BPM) observed. This could be a sign of high cardiovascular fitness, but may also indicate bradycardia if accompanied by dizziness or fatigue. Monitor symptoms and stay well-hydrated.`;
+            } else if (isHighStress) {
+                insight =
+                    `High stress level detected with elevated physiological arousal. This can impact heart rate variability and cardiac health. Practice a 3-minute grounding exercise: focus on breathing — inhale 4 counts, hold 4, exhale 6. Consider a short walk or stretching break.`;
+            } else if (isHighGsr) {
+                insight =
+                    `Elevated GSR (${avgGsr.toFixed(0)}) indicates high sympathetic nervous system activity, often linked to stress or excitement. Your body is in a heightened arousal state. Practice slow, controlled breathing to help regulate this response.`;
+            } else if (isLowGsr) {
+                insight =
+                    `Low GSR (${avgGsr.toFixed(0)}) suggests deep relaxation or low physiological engagement. This is generally positive. If you feel lethargic, consider light physical activity to increase alertness.`;
+            } else if (displayAvg >= 60 && displayAvg <= 100 && stress === 'RELAXED') {
+                insight =
+                    `Heart rate of ${displayAvg.toFixed(0)} BPM with low stress indicates a balanced, relaxed physiological state — optimal for cardiovascular health. Continue maintaining this with regular movement, hydration, and mindful breaks.`;
+            } else {
+                insight =
+                    `Heart rate at ${displayAvg.toFixed(0)} BPM with ${stress.toLowerCase()} stress and GSR at ${avgGsr.toFixed(0)}. Your body is in a stable state. Continue monitoring your signals and take periodic breaks to maintain balance.`;
+            }
+
+            return insight;
+        }
+
+        // ============================================
+        // Add insight to sidebar
+        // ============================================
+        function addInsight(text, detail, priority = 2) {
+            if (insightEmpty) insightEmpty.style.display = 'none';
+
+            const card = document.createElement('div');
+            card.className = `insight-card priority-${priority}`;
+            const time = new Date().toLocaleTimeString();
+            card.innerHTML = `
+                <div class="insight-time">${time}</div>
+                <div class="insight-text">${text}</div>
+                ${detail ? `<div class="insight-detail">${detail}</div>` : ''}
+            `;
+            insightsContainer.prepend(card);
+
+            while (insightsContainer.children.length > 25) {
+                insightsContainer.removeChild(insightsContainer.lastChild);
+            }
+
+            aiInsights.push({ text, detail, priority, timestamp: time });
+            if (aiInsights.length > 50) aiInsights.shift();
+            insightCounter++;
+        }
+
+        // ============================================
+        // Recording Functions
+        // ============================================
+        function startRecordingFromPrompt() {
+            promptOverlay.classList.remove('active');
+            startRecording();
+        }
+
+        function dismissPrompt() {
+            promptOverlay.classList.remove('active');
+        }
+
+        function startRecording() {
+            if (connectionState !== 'connected') {
+                alert('Please connect to a device first.');
+                return;
+            }
+            if (isRecording) return;
+
+            isRecording = true;
+            recordingStartTime = Date.now();
+            recordedBpmData = [];
+            recordedGsrData = [];
+            recordedStressData = [];
+            recordedTimestamps = [];
+            bpmRollingWindow = [];
+            aiInsights = [];
+            insightCounter = 0;
+            currentSessionData = null;
+
+            showDataElements(true);
+
+            insightsContainer.innerHTML = '';
+            const empty = document.createElement('div');
+            empty.className = 'insight-empty';
+            empty.id = 'insight-empty';
+            empty.innerHTML = `
+                <p style="font-size:32px; margin-bottom:8px;">⏳</p>
+                <p>Recording started — AI analyzing every 90 seconds.</p>
+                <p style="font-size:12px; color:var(--text-muted); margin-top:4px;">First insight will appear in 90s.</p>
+            `;
+            insightsContainer.appendChild(empty);
+
+            resultsOverlay.classList.remove('active');
+
+            startRecordBtn.disabled = true;
+            startRecordBtn.innerHTML = '<span class="icon">●</span> Recording...';
+            startRecordBtn.className = 'btn-record stop-btn';
+            stopRecordBtn.disabled = false;
+            recordingIndicator.style.display = 'flex';
+            recordingControls.classList.add('recording-active');
+            recordingTimer.classList.add('recording');
+            mainContent.classList.add('recording-active');
+
+            recordingTimerInterval = setInterval(updateTimer, 1000);
+
+            if (aiAnalysisInterval) clearInterval(aiAnalysisInterval);
+
+            aiAnalysisInterval = setInterval(() => {
+                if (isRecording) runAIAnalysis();
+            }, 90000);
+
+            console.log('Recording started — first AI insight in 90 seconds (1 insight per cycle)');
+        }
+
+        function stopRecording() {
+            if (!isRecording) return;
+
+            isRecording = false;
+            if (recordingTimerInterval) {
+                clearInterval(recordingTimerInterval);
+                recordingTimerInterval = null;
+            }
+            if (aiAnalysisInterval) {
+                clearInterval(aiAnalysisInterval);
+                aiAnalysisInterval = null;
+            }
+
+            startRecordBtn.disabled = false;
+            startRecordBtn.innerHTML = '<span class="icon">▶</span> Start';
+            startRecordBtn.className = 'btn-record start';
+            stopRecordBtn.disabled = true;
+            recordingIndicator.style.display = 'none';
+            recordingControls.classList.remove('recording-active');
+            recordingTimer.classList.remove('recording');
+            mainContent.classList.remove('recording-active');
+
+            // Compute and store session data, then show modal
+            buildAndShowResults();
+
+            console.log('Recording stopped');
+        }
+
+        function updateTimer() {
+            if (!recordingStartTime) return;
+            const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+            const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
+            const secs = String(elapsed % 60).padStart(2, '0');
+            recordingTimer.textContent = `${mins}:${secs}`;
+        }
+
+        // ============================================
+        // Build session data and show results modal
+        // ============================================
+        function buildAndShowResults() {
+            const avgBpm = recordedBpmData.length > 0 ?
+                recordedBpmData.reduce((a, b) => a + b, 0) / recordedBpmData.length :
+                0;
+
+            const avgGsr = recordedGsrData.length > 0 ?
+                recordedGsrData.reduce((a, b) => a + b, 0) / recordedGsrData.length :
+                0;
+
+            let stress = 'UNKNOWN';
+            if (recordedStressData.length > 0) {
+                const freq = {};
+                recordedStressData.forEach(s => { freq[s] = (freq[s] || 0) + 1; });
+                let maxCount = 0;
+                for (const [key, count] of Object.entries(freq)) {
+                    if (count > maxCount) { maxCount = count;
+                        stress = key; }
+                }
+            }
+
+            let prediction = 'Unknown';
+            if (onnxSession && recordedBpmData.length > 0) {
+                try {
+                    const latestBpm = recordedBpmData[recordedBpmData.length - 1];
+                    const normalizedBpm = (latestBpm - HR_TRAINING_MEAN) / HR_TRAINING_STD;
+                    const inputName = onnxSession.inputNames[0];
+                    const tensor = new ort.Tensor('float32', [normalizedBpm], [1, 1]);
+                    const results = onnxSession.run({ [inputName]: tensor });
+                    const outputName = onnxSession.outputNames[0];
+                    const outputData = results[outputName].data;
+                    let maxIndex = 0,
+                        maxValue = outputData[0];
+                    for (let i = 1; i < outputData.length; i++) {
+                        if (outputData[i] > maxValue) { maxValue = outputData[i];
+                            maxIndex = i; }
+                    }
+                    prediction = labelMap[maxIndex] || `Class ${maxIndex}`;
+                } catch (e) { /* ignore */ }
+            }
+
+            const elapsed = recordingStartTime ? Math.floor((Date.now() - recordingStartTime) / 1000) : 0;
+            const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
+            const secs = String(elapsed % 60).padStart(2, '0');
+            const durationStr = `${mins}:${secs}`;
+
+            // Build insights list
+            let topInsights = [];
+            if (aiInsights.length > 0) {
+                const sorted = [...aiInsights].sort((a, b) => a.priority - b.priority);
+                topInsights = sorted.slice(0, 8);
+            }
+
+            if (topInsights.length === 0 && recordedBpmData.length > 0) {
+                const fallback = generateFallbackInsight(avgBpm, avgBpm, avgGsr, stress, prediction);
+                topInsights.push({
+                    text: fallback,
+                    detail: `Heart rate: ${avgBpm.toFixed(0)} BPM  |  Stress: ${stress}  |  GSR: ${avgGsr.toFixed(0)}`,
+                    priority: 1,
+                    timestamp: new Date().toLocaleTimeString()
+                });
+            }
+
+            // Store session data for saving
+            currentSessionData = {
+                duration: durationStr,
+                durationSeconds: elapsed,
+                avgBpm: avgBpm,
+                stress: stress,
+                avgGsr: avgGsr,
+                aiPrediction: prediction,
+                insights: topInsights.map(ins => ({
+                    text: ins.text,
+                    detail: ins.detail || '',
+                    priority: ins.priority || 2,
+                    timestamp: ins.timestamp || new Date().toLocaleTimeString()
+                }))
+            };
+
+            // Populate modal
+            resultsDuration.textContent = `⏱ ${durationStr}`;
+            resultsAvgBpm.textContent = avgBpm ? `${avgBpm.toFixed(0)} BPM` : '--';
+            resultsStress.textContent = stress || '--';
+            resultsGsr.textContent = avgGsr ? `${avgGsr.toFixed(0)}` : '--';
+            resultsAi.textContent = prediction || '--';
+
+            resultsInsightsList.innerHTML = '';
+            if (topInsights.length === 0) {
+                resultsInsightsList.innerHTML =
+                    `<div style="color:var(--text-muted); text-align:center; padding:16px 0; font-size:14px;">No insights available from this session.</div>`;
+            } else {
+                topInsights.forEach((insight, idx) => {
+                    const div = document.createElement('div');
+                    const priority = insight.priority || (idx + 1);
+                    div.className = `result-insight-item priority-${priority}`;
+                    div.innerHTML = `
+                        <span class="insight-label">${insight.timestamp || 'Insight'}</span>
+                        ${insight.text}
+                        ${insight.detail ? `<div style="font-size:11px; color:var(--text-muted); margin-top:4px;">${insight.detail}</div>` : ''}
+                    `;
+                    resultsInsightsList.appendChild(div);
+                });
+            }
+
+            resultsOverlay.classList.add('active');
+        }
+
+        // ============================================
+        // SAVE: Save session and go to reports
+        // ============================================
+        function saveAndGoToReports() {
+            if (!currentSessionData) {
+                showToast('No session data to save.', 'error');
+                return;
+            }
+
+            // Ensure we have insights
+            if (!currentSessionData.insights || currentSessionData.insights.length === 0) {
+                // Generate a fallback insight
+                const fallback = generateFallbackInsight(
+                    currentSessionData.avgBpm || 0,
+                    currentSessionData.avgBpm || 0,
+                    currentSessionData.avgGsr || 0,
+                    currentSessionData.stress || 'UNKNOWN',
+                    currentSessionData.aiPrediction || 'Unknown'
+                );
+                currentSessionData.insights = [{
+                    text: fallback,
+                    detail: `Heart rate: ${(currentSessionData.avgBpm || 0).toFixed(0)} BPM  |  Stress: ${currentSessionData.stress || 'UNKNOWN'}  |  GSR: ${(currentSessionData.avgGsr || 0).toFixed(0)}`,
+                    priority: 1,
+                    timestamp: new Date().toLocaleTimeString()
+                }];
+            }
+
+            // Save to sessionStorage for the reports page to pick up
+            try {
+                sessionStorage.setItem('pulse_ai_pending_save', JSON.stringify(currentSessionData));
+                // Also set a flag that we're coming from the dashboard with a save
+                sessionStorage.setItem('pulse_ai_save_pending', 'true');
+                showToast('✅ Session saved! Redirecting to Reports...', 'success');
+
+                // Brief delay to show toast, then redirect
+                setTimeout(() => {
+                    window.location.href = 'reports.html';
+                }, 600);
+            } catch (e) {
+                console.error('Save error:', e);
+                showToast('Failed to save session. Please try again.', 'error');
+            }
+        }
+
+        // ============================================
+        // Show / Hide Data Elements
+        // ============================================
+        function showDataElements(show) {
+            if (show) {
+                if (bpmPlaceholder) bpmPlaceholder.style.display = 'none';
+                if (gsrPlaceholder) gsrPlaceholder.style.display = 'none';
+                document.querySelectorAll('#bpmChart, #gsrChart').forEach(c => c.style.display = 'block');
+            } else {
+                if (bpmPlaceholder) bpmPlaceholder.style.display = 'flex';
+                if (gsrPlaceholder) gsrPlaceholder.style.display = 'flex';
+                document.querySelectorAll('#bpmChart, #gsrChart').forEach(c => c.style.display = 'none');
+            }
+        }
+
+        // ============================================
+        // Close Results Modal
+        // ============================================
+        function closeResults() {
+            resultsOverlay.classList.remove('active');
+            recordingTimer.textContent = '00:00';
+        }
+
+        // ============================================
+        // Charting Functions
+        // ============================================
+        function initCharts() {
+            const bpmCanvas = document.getElementById('bpmChart');
+            const gsrCanvas = document.getElementById('gsrChart');
+
+            if (bpmCanvas && gsrCanvas) {
+                bpmCanvas.width = bpmCanvas.offsetWidth;
+                bpmCanvas.height = bpmCanvas.offsetHeight;
+                gsrCanvas.width = gsrCanvas.offsetWidth;
+                gsrCanvas.height = gsrCanvas.offsetHeight;
+
+                bpmCtx = bpmCanvas.getContext('2d');
+                gsrCtx = gsrCanvas.getContext('2d');
+
+                updateCharts();
+            }
+        }
+
+        function drawChart(ctx, color, data, label) {
+            const canvas = ctx.canvas;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (data.length === 0) {
+                ctx.fillStyle = '#94A3B8';
+                ctx.font = '13px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText('Waiting for data...', canvas.width / 2, canvas.height / 2);
+                return;
+            }
+
+            const padding = 20;
+            const chartWidth = canvas.width - padding * 2;
+            const chartHeight = canvas.height - padding * 2;
+
+            ctx.strokeStyle = '#E2E8F0';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 4; i++) {
+                const y = padding + (chartHeight / 4) * i;
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(canvas.width - padding, y);
+                ctx.stroke();
+            }
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+
+            const stepX = chartWidth / (maxDataPoints - 1);
+            const maxVal = Math.max(...data, 100);
+            const minVal = Math.min(...data, 0);
+            const range = maxVal - minVal || 100;
+
+            data.forEach((val, i) => {
+                const x = padding + i * stepX;
+                const y = padding + chartHeight - ((val - minVal) / range) * chartHeight;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+
+            ctx.stroke();
+
+            ctx.lineTo(padding + (data.length - 1) * stepX, padding + chartHeight);
+            ctx.lineTo(padding, padding + chartHeight);
+            ctx.closePath();
+            ctx.fillStyle = color + '25';
+            ctx.fill();
+        }
+
+        function updateCharts() {
+            if (bpmCtx) {
+                const canvas = bpmCtx.canvas;
+                if (bpmData.length > 0) {
+                    if (bpmPlaceholder) bpmPlaceholder.style.display = 'none';
+                    canvas.style.display = 'block';
+                    drawChart(bpmCtx, '#3B82F6', bpmData);
+                } else {
+                    if (bpmPlaceholder) bpmPlaceholder.style.display = 'flex';
+                    canvas.style.display = 'none';
+                }
+            }
+            if (gsrCtx) {
+                const canvas = gsrCtx.canvas;
+                if (gsrData.length > 0) {
+                    if (gsrPlaceholder) gsrPlaceholder.style.display = 'none';
+                    canvas.style.display = 'block';
+                    drawChart(gsrCtx, '#10B981', gsrData);
+                } else {
+                    if (gsrPlaceholder) gsrPlaceholder.style.display = 'flex';
+                    canvas.style.display = 'none';
+                }
+            }
+        }
+
+        // ============================================
+        // Bluetooth Handlers
+        // ============================================
+        async function connectToDevice() {
+            if (connectionState === 'connected') {
+                await disconnectDevice();
+                return;
+            }
+
+            connectionState = 'connecting';
+            connectButton.textContent = 'Connecting...';
+            connectButton.disabled = true;
+
+            try {
+                bluetoothDevice = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: [SERVICE_UUID, GSR_CHAR_UUID]
+                });
+
+                server = await bluetoothDevice.gatt.connect();
+                service = await server.getPrimaryService(SERVICE_UUID);
+                bpmCharacteristic = await service.getCharacteristic(BPM_CHAR_UUID);
+                stressCharacteristic = await service.getCharacteristic(STRESS_CHAR_UUID);
+                gsrCharacteristic = await service.getCharacteristic(GSR_CHAR_UUID);
+
+                await bpmCharacteristic.startNotifications();
+                await stressCharacteristic.startNotifications();
+                await gsrCharacteristic.startNotifications();
+
+                bpmCharacteristic.addEventListener('characteristicvaluechanged', handleBpmChange);
+                stressCharacteristic.addEventListener('characteristicvaluechanged', handleStressChange);
+                gsrCharacteristic.addEventListener('characteristicvaluechanged', handleGsrChange);
+
+                deviceStatusDot.style.display = 'inline-block';
+                deviceStatusText.textContent = 'Device Active';
+
+                setConnectionState('connected');
+
+                bluetoothDevice.addEventListener('gattserverdisconnected', () => {
+                    disconnectDevice();
+                });
+
+                startRecordBtn.disabled = false;
+
+                promptOverlay.classList.add('active');
+                promptStartBtn.disabled = false;
+
+            } catch (error) {
+                console.error('Connection error:', error);
+                setConnectionState('disconnected');
+                if (error.name !== 'NotFoundError') {
+                    alert(`Connection failed: ${error.message}`);
+                }
+                startRecordBtn.disabled = true;
+                promptOverlay.classList.remove('active');
+            }
+        }
+
+        async function disconnectDevice() {
+            if (bpmCharacteristic) { try { await bpmCharacteristic.stopNotifications(); } catch (e) {} }
+            if (stressCharacteristic) { try { await stressCharacteristic.stopNotifications(); } catch (e) {} }
+            if (gsrCharacteristic) { try { await gsrCharacteristic.stopNotifications(); } catch (e) {} }
+            if (server) { try { await server.disconnect(); } catch (e) {} }
+
+            if (isRecording) stopRecording();
+
+            bluetoothDevice = null;
+            server = null;
+            service = null;
+            bpmCharacteristic = null;
+            stressCharacteristic = null;
+            gsrCharacteristic = null;
+
+            bpmValue.textContent = '--';
+            avgBpmValue.textContent = '--';
+            stressValue.textContent = '--';
+            stressUnit.textContent = 'Waiting for data...';
+            aiValue.textContent = '--';
+
+            bpmBadge.style.display = 'none';
+            avgBpmBadge.style.display = 'none';
+            stressBadge.style.display = 'none';
+            aiBadge.style.display = 'none';
+
+            if (onnxSession) {
+                aiSubtitle.textContent = 'Model loaded, waiting for data...';
+                aiBadge.textContent = 'Ready';
+                aiBadge.className = 'stat-badge good';
+                aiBadge.style.display = 'inline-flex';
+            }
+
+            deviceStatusDot.style.display = 'none';
+            deviceStatusText.textContent = 'Device Active';
+
+            bpmData = [];
+            gsrData = [];
+            bpmRollingWindow = [];
+            updateCharts();
+
+            setConnectionState('disconnected');
+            startRecordBtn.disabled = true;
+            stopRecordBtn.disabled = true;
+            recordingIndicator.style.display = 'none';
+            recordingControls.classList.remove('recording-active');
+            recordingTimer.classList.remove('recording');
+            mainContent.classList.remove('recording-active');
+
+            if (recordingTimerInterval) {
+                clearInterval(recordingTimerInterval);
+                recordingTimerInterval = null;
+            }
+            recordingTimer.textContent = '00:00';
+            promptOverlay.classList.remove('active');
+            resultsOverlay.classList.remove('active');
+
+            showDataElements(false);
+        }
+
+        function setConnectionState(state) {
+            connectionState = state;
+
+            if (state === 'connected') {
+                connectionBadge.className = 'connection-badge';
+                connectionBadge.innerHTML = '<span class="connection-dot"></span><span>Connected</span>';
+                connectButton.textContent = 'Disconnect';
+                connectButton.className = 'btn-connect disconnect';
+                connectButton.disabled = false;
+                startRecordBtn.disabled = false;
+                showDataElements(false);
+            } else if (state === 'connecting') {
+                connectionBadge.className = 'connection-badge';
+                connectionBadge.innerHTML = '<span class="connection-dot"></span><span>Connecting...</span>';
+            } else {
+                connectionBadge.className = 'connection-badge disconnected';
+                connectionBadge.innerHTML = '<span class="connection-dot"></span><span>Disconnected</span>';
+                connectButton.textContent = 'Connect Device';
+                connectButton.className = 'btn-connect';
+                connectButton.disabled = false;
+                startRecordBtn.disabled = true;
+                stopRecordBtn.disabled = true;
+                showDataElements(false);
+            }
+        }
+
+        async function handleBpmChange(event) {
+            const value = event.target.value.getUint16(0, true);
+
+            if (!isRecording) return;
+
+            bpmValue.textContent = value;
+
+            bpmRollingWindow.push({ value, timestamp: Date.now() });
+            const cutoff = Date.now() - 60000;
+            bpmRollingWindow = bpmRollingWindow.filter(item => item.timestamp >= cutoff);
+
+            const oneMinAvg = computeOneMinuteAvg();
+            if (oneMinAvg !== null) {
+                avgBpmValue.textContent = oneMinAvg.toFixed(0);
+                avgBpmBadge.style.display = 'inline-flex';
+                if (oneMinAvg >= 60 && oneMinAvg <= 100) {
+                    avgBpmBadge.textContent = 'Normal';
+                    avgBpmBadge.className = 'stat-badge good';
+                } else if (oneMinAvg > 100) {
+                    avgBpmBadge.textContent = 'Elevated';
+                    avgBpmBadge.className = 'stat-badge warning';
+                } else {
+                    avgBpmBadge.textContent = 'Low';
+                    avgBpmBadge.className = 'stat-badge warning';
+                }
+            } else {
+                avgBpmValue.textContent = '--';
+                avgBpmBadge.style.display = 'none';
+            }
+
+            if (isRecording) {
+                recordedBpmData.push(value);
+                recordedTimestamps.push(Date.now());
+            }
+
+            if (value === 0) {
+                bpmBadge.textContent = 'No Finger';
+                bpmBadge.className = 'stat-badge bad';
+                bpmBadge.style.display = 'inline-flex';
+                if (onnxSession) {
+                    aiValue.textContent = '--';
+                    aiBadge.style.display = 'none';
+                }
+            } else {
+                if (value >= 60 && value <= 100) {
+                    bpmBadge.textContent = 'Normal';
+                    bpmBadge.className = 'stat-badge good';
+                } else if (value > 100) {
+                    bpmBadge.textContent = 'Elevated';
+                    bpmBadge.className = 'stat-badge warning';
+                } else {
+                    bpmBadge.textContent = 'Low';
+                    bpmBadge.className = 'stat-badge warning';
+                }
+                bpmBadge.style.display = 'inline-flex';
+            }
+
+            bpmData.push(value);
+            if (bpmData.length > maxDataPoints) bpmData.shift();
+            updateCharts();
+
+            if (value > 0 && onnxSession && isRecording) {
+                try {
+                    const normalizedBpm = (value - HR_TRAINING_MEAN) / HR_TRAINING_STD;
+                    const inputName = onnxSession.inputNames[0];
+                    const tensor = new ort.Tensor('float32', [normalizedBpm], [1, 1]);
+                    const results = await onnxSession.run({ [inputName]: tensor });
+                    const outputName = onnxSession.outputNames[0];
+                    const outputData = results[outputName].data;
+
+                    let predictedLabel = "Unknown";
+                    if (outputData.length === 3) {
+                        let maxIndex = 0,
+                            maxValue = outputData[0];
+                        for (let i = 1; i < outputData.length; i++) {
+                            if (outputData[i] > maxValue) { maxValue = outputData[i];
+                                maxIndex = i; }
+                        }
+                        predictedLabel = labelMap[maxIndex] || `Class ${maxIndex}`;
+                    } else if (outputData.length === 1) {
+                        const classIndex = Math.round(outputData[0]);
+                        predictedLabel = labelMap[classIndex] || `Class ${classIndex}`;
+                    } else {
+                        let maxIndex = 0,
+                            maxValue = outputData[0];
+                        for (let i = 1; i < outputData.length; i++) {
+                            if (outputData[i] > maxValue) { maxValue = outputData[i];
+                                maxIndex = i; }
+                        }
+                        predictedLabel = labelMap[maxIndex] || `Class ${maxIndex}`;
+                    }
+
+                    aiValue.textContent = predictedLabel;
+                    aiBadge.textContent = 'Live';
+                    aiBadge.className = 'stat-badge good';
+                    aiBadge.style.display = 'inline-flex';
+
+                } catch (error) {
+                    console.error('ONNX inference error:', error);
+                    aiValue.textContent = 'Error';
+                    aiBadge.textContent = 'Inference Failed';
+                    aiBadge.className = 'stat-badge bad';
+                    aiBadge.style.display = 'inline-flex';
+                }
+            }
+        }
+
+        function handleStressChange(event) {
+            const decoder = new TextDecoder();
+            let value = decoder.decode(event.target.value).replace(/\0/g, '').trim();
+
+            if (!isRecording) return;
+
+            stressValue.textContent = value;
+            stressUnit.textContent = 'Stress Level';
+
+            if (isRecording) {
+                recordedStressData.push(value);
+            }
+
+            if (value === 'RELAXED') {
+                stressBadge.textContent = 'Calm';
+                stressBadge.className = 'stat-badge good';
+                stressBadge.style.display = 'inline-flex';
+            } else if (value === 'MODERATE STRESS') {
+                stressBadge.textContent = 'Alert';
+                stressBadge.className = 'stat-badge warning';
+                stressBadge.style.display = 'inline-flex';
+            } else if (value === 'HIGH STRESS') {
+                stressBadge.textContent = 'Stressed';
+                stressBadge.className = 'stat-badge bad';
+                stressBadge.style.display = 'inline-flex';
+            } else {
+                stressBadge.style.display = 'none';
+            }
+        }
+
+        function handleGsrChange(event) {
+            const value = event.target.value.getUint16(0, true);
+
+            if (!isRecording) return;
+
+            if (isRecording) {
+                recordedGsrData.push(value);
+            }
+            gsrData.push(value);
+            if (gsrData.length > maxDataPoints) gsrData.shift();
+            updateCharts();
+        }
+
+        function logout() {
+    if (connectionState === 'connected') {
+        disconnectDevice();
+    }
+    if (isRecording) stopRecording();
+    resultsOverlay.classList.remove('active');
+    alert('Logged out successfully');
+    window.location.href = 'login.html';
+}
+
+        // ============================================
+        // Initialization
+        // ============================================
+        window.addEventListener('load', async () => {
+            initCharts();
+            setConnectionState('disconnected');
+            startRecordBtn.disabled = true;
+            stopRecordBtn.disabled = true;
+            showDataElements(false);
+
+            await autoLoadModel();
+            await initFirebaseAI();
+
+            if (!navigator.bluetooth) {
+                alert('Web Bluetooth API is not supported in your browser. Please use Chrome or Edge.');
+                connectButton.disabled = true;
+                connectButton.textContent = 'Bluetooth Not Supported';
+            }
+
+            // Check if there's a pending save from reports page (e.g., after redirect)
+            const pendingSave = sessionStorage.getItem('pulse_ai_save_pending');
+            if (pendingSave === 'true') {
+                sessionStorage.removeItem('pulse_ai_save_pending');
+                // Show a toast notification
+                showToast('✅ Session saved successfully!', 'success');
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            initCharts();
+        });
+
+        // Expose functions globally
+        window.connectToDevice = connectToDevice;
+        window.startRecording = startRecording;
+        window.stopRecording = stopRecording;
+        window.startRecordingFromPrompt = startRecordingFromPrompt;
+        window.dismissPrompt = dismissPrompt;
+        window.logout = logout;
+        window.closeResults = closeResults;
+        window.saveAndGoToReports = saveAndGoToReports;
+    </script>
+</body>
+</html>

@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PulseGuard — Create Account</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+    <style>
+        /* ── reset & root ──────────────────────────────── */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        :root {
+            --bg: #EEF1F8;
+            --surface: #FFFFFF;
+            --surface-soft: #F5F7FC;
+            --border: #DDE2EE;
+            --blue-deep: #2C3E8C;
+            --blue-mid: #4A6CF7;
+            --blue-light: #7B96FF;
+            --blue-ghost: #EBF0FF;
+            --text-primary: #111827;
+            --text-secondary: #4B5563;
+            --text-muted: #9CA3AF;
+            --success: #10B981;
+            --error: #EF4444;
+            --radius: 14px;
+            --radius-sm: 8px;
+            --shadow: 0 4px 24px rgba(44, 62, 140, 0.10);
+            --shadow-lg: 0 8px 40px rgba(44, 62, 140, 0.15);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            color: var(--text-primary);
+            line-height: 1.5;
+            display: flex;
+            align-items: stretch;
+        }
+
+        /* ── left panel ────────────────────────────────── */
+        .signup-left {
+            width: 42%;
+            background: var(--blue-deep);
+            padding: 48px 52px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+        .signup-left::before {
+            content: '';
+            position: absolute;
+            top: -80px;
+            right: -80px;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(123, 150, 255, 0.25) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        .signup-left::after {
+            content: '';
+            position: absolute;
+            bottom: -60px;
+            left: -60px;
+            width: 240px;
+            height: 240px;
+            background: radial-gradient(circle, rgba(74, 108, 247, 0.30) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        .left-brand {
+            position: relative;
+            z-index: 1;
+        }
+        .left-brand .brand-icon {
+            background: rgba(255, 255, 255, 0.12);
+            margin-bottom: 0;
+        }
+        .left-brand .brand-name {
+            color: white;
+            font-size: 14px;
+        }
+        .left-headline {
+            font-family: 'DM Serif Display', serif;
+            font-size: 42px;
+            line-height: 1.1;
+            color: white;
+            margin-bottom: 18px;
+            position: relative;
+            z-index: 1;
+        }
+        .left-headline em {
+            font-style: italic;
+            color: var(--blue-light);
+        }
+        .left-body {
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.70);
+            line-height: 1.6;
+            margin-bottom: 40px;
+            position: relative;
+            z-index: 1;
+        }
+        .trust-badges {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            position: relative;
+            z-index: 1;
+        }
+        .badge {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.85);
+            font-weight: 500;
+        }
+        .badge-icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.10);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        /* ── right panel ───────────────────────────────── */
+        .signup-right {
+            flex: 1;
+            background: var(--bg);
+            padding: 48px 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            overflow-y: auto;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .brand-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--blue-ghost);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .brand-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+        .brand-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--blue-deep);
+            letter-spacing: -0.3px;
+        }
+        .signup-title {
+            font-family: 'DM Serif Display', serif;
+            font-size: 28px;
+            color: var(--text-primary);
+            margin-bottom: 32px;
+        }
+        .name-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+        .name-row>.field-group {
+            min-width: 0;
+        }
+        .field-group {
+            margin-bottom: 18px;
+        }
+        label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            letter-spacing: 0.1px;
+            display: block;
+            margin-bottom: 6px;
+        }
+        .input-wrap {
+            position: relative;
+        }
+        .icon-left-wrap input {
+            padding-left: 40px;
+        }
+        .icon-left {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            display: flex;
+            pointer-events: none;
+        }
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 13px 16px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            color: var(--text-primary);
+            background: var(--surface-soft);
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-color: var(--surface-soft);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 36px;
+        }
+        input:focus,
+        select:focus {
+            border-color: var(--blue-mid);
+            box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.12);
+            background: white;
+            outline: none;
+        }
+        input::placeholder {
+            color: var(--text-muted);
+        }
+        .icon-right {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 4px;
+            color: var(--text-muted);
+            display: flex;
+        }
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--blue-deep) 0%, var(--blue-mid) 100%);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: opacity 0.2s, transform 0.15s;
+            margin-top: 8px;
+        }
+        .btn-primary:hover {
+            opacity: 0.92;
+            transform: translateY(-1px);
+        }
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        .btn-primary:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .footer-text {
+            text-align: center;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        .link-blue {
+            color: var(--blue-mid);
+            font-weight: 600;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-family: inherit;
+            font-size: inherit;
+            padding: 0;
+        }
+        .link-blue:hover {
+            text-decoration: underline;
+        }
+        .alert {
+            padding: 11px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            display: none;
+            overflow-wrap: break-word;
+        }
+        .alert.error {
+            background: #FEF2F2;
+            color: #B91C1C;
+            border: 1px solid #FECACA;
+        }
+        .alert.success {
+            background: #ECFDF5;
+            color: #065F46;
+            border: 1px solid #A7F3D0;
+        }
+        .alert.show {
+            display: block;
+        }
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ── responsive ────────────────────────────────── */
+        @media (max-width: 768px) {
+            .signup-left {
+                display: none;
+            }
+            .signup-right {
+                padding: 32px 24px;
+            }
+            .name-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ─── LEFT PANEL ─── -->
+    <div class="signup-left">
+        <div class="left-brand brand">
+            <div class="brand-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                </svg>
+            </div>
+            <span class="brand-name">PulseGuard</span>
+        </div>
+        <div>
+            <h2 class="left-headline">Secure Healthcare<br><em>Starts Here.</em></h2>
+            <p class="left-body">Join the PulseGuard ecosystem. Experience clinically precise insights integrated with your premium devices in a seamless, secure environment.</p>
+        </div>
+        <div class="trust-badges">
+            <div class="badge">
+                <div class="badge-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                </div>
+                Multi-Device Synchronization
+            </div>
+            <div class="badge">
+                <div class="badge-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                </div>
+                Advanced AI Diagnostics
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── RIGHT PANEL ─── -->
+    <div class="signup-right">
+        <h2 class="signup-title">Create Account</h2>
+
+        <div id="signup-alert" class="alert error"></div>
+
+        <!-- Name row: First + Last -->
+        <div class="name-row">
+            <div class="field-group">
+                <label for="su-first">First Name</label>
+                <input type="text" id="su-first" placeholder="Jane" />
+            </div>
+            <div class="field-group">
+                <label for="su-last">Last Name</label>
+                <input type="text" id="su-last" placeholder="Doe" />
+            </div>
+        </div>
+
+        <!-- Email -->
+        <div class="field-group">
+            <label for="su-email">Professional Email</label>
+            <div class="input-wrap icon-left-wrap">
+                <input type="email" id="su-email" placeholder="dr.jane@hospital.org" />
+            </div>
+        </div>
+
+        <!-- Password -->
+        <div class="field-group">
+            <label for="su-password">Secure Password</label>
+            <div class="input-wrap icon-left-wrap">
+                <input type="password" id="su-password" placeholder="••••••••••••" />
+                <button class="icon-right" onclick="togglePassword('su-password', this)" aria-label="Toggle password" type="button">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+            </div>
+            <p style="font-size:12px;color:var(--text-muted);margin-top:5px;">Must be at least 12 characters with symbols.</p>
+        </div>
+
+        <!-- Age + Gender row -->
+        <div class="name-row">
+            <div class="field-group">
+                <label for="su-age">Age</label>
+                <input type="number" id="su-age" placeholder="35" min="13" max="120" />
+            </div>
+            <div class="field-group">
+                <label for="su-gender">Gender</label>
+                <select id="su-gender">
+                    <option value="" disabled selected>Select gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                    <option value="prefer-not-to-say">Prefer not to say</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Terms -->
+        <p class="footer-text" style="margin: 20px 0 30px; font-size: 13px; text-align: left;">
+            By signing up, you agree to the
+            <a href="#" style="color: var(--blue-mid); text-decoration: none; font-weight: 500;">Terms of Service</a> and
+            <a href="#" style="color: var(--blue-mid); text-decoration: none; font-weight: 500;">Privacy Policy</a>.
+        </p>
+
+        <!-- Submit -->
+        <button class="btn-primary" id="signup-btn" onclick="handleSignup()">Create Account →</button>
+
+        <p class="footer-text" style="margin-top:20px;">
+            Already have an account?
+            <button class="link-blue" onclick="window.location.href='login.html'" type="button">Sign in</button>
+        </p>
+    </div>
+
+    <!-- ─── FIREBASE + SCRIPT ─────────────────────────── -->
+    <script type="importmap">
+        {
+            "imports": {
+                "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
+                "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
+                "firebase/database": "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import { initializeApp } from "firebase/app";
+        import {
+            getAuth,
+            createUserWithEmailAndPassword,
+            updateProfile,
+            onAuthStateChanged
+        } from "firebase/auth";
+        import {
+            getDatabase,
+            ref,
+            set,
+            get
+        } from "firebase/database";
+
+        // ─── Firebase config ────────────────────────────────
+        const firebaseConfig = {
+            apiKey: "AIzaSyD29CBLwt9HpS_c7zrKroNzs3PDw5lSCOw",
+            authDomain: "pulseguard-c604e.firebaseapp.com",
+            projectId: "pulseguard-c604e",
+            storageBucket: "pulseguard-c604e.firebasestorage.app",
+            messagingSenderId: "688421677716",
+            appId: "1:688421677716:web:099a4d93482de4fa196281",
+            measurementId: "G-289NDK1QZM",
+            databaseURL: "https://pulseguard-c604e-default-rtdb.firebaseio.com"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        // ─── Global flag to prevent onAuthStateChanged from redirecting during signup ───
+        let isSigningUp = false;
+
+        // ─── DOM helpers ─────────────────────────────────────
+        function showAlert(id, msg, type = 'error') {
+            const el = document.getElementById(id);
+            el.textContent = msg;
+            el.className = `alert ${type} show`;
+        }
+
+        function clearAlert(id) {
+            const el = document.getElementById(id);
+            el.className = 'alert error';
+        }
+
+        function setLoading(btnId, loading) {
+            const btn = document.getElementById(btnId);
+            btn.disabled = loading;
+            btn.innerHTML = loading ?
+                '<span class="spinner"></span>' :
+                'Create Account →';
+        }
+
+        // ─── Toggle password visibility (exposed to window) ──
+        window.togglePassword = function(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const isHidden = input.type === 'password';
+            input.type = isHidden ? 'text' : 'password';
+            btn.innerHTML = isHidden ?
+                `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>` :
+                `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+        };
+
+        // ─── Save user to Realtime Database ─────────────────
+        async function saveUserToDatabase(user, extraData = {}) {
+            const userRef = ref(db, 'users/' + user.uid);
+            const snapshot = await get(userRef);
+            const existing = snapshot.exists() ? snapshot.val() : {};
+
+            const payload = {
+                uid: user.uid,
+                email: user.email,
+                displayName: extraData.displayName || user.displayName || existing.displayName || '',
+                firstName: extraData.firstName || existing.firstName || '',
+                lastName: extraData.lastName || existing.lastName || '',
+                age: extraData.age !== undefined ? extraData.age : (existing.age ?? null),
+                gender: extraData.gender || existing.gender || null,
+                createdAt: existing.createdAt || new Date().toISOString(),
+                lastLogin: new Date().toISOString(),
+                device: existing.device || 'Pulse Wearable V2',
+                plan: existing.plan || 'Professional'
+            };
+
+            await set(userRef, payload);
+            console.log('✅ User data saved to Firebase:', payload);
+        }
+
+        // ─── Signup handler (exposed to window) ─────────────
+        window.handleSignup = async function() {
+            clearAlert('signup-alert');
+
+            const firstName = document.getElementById('su-first').value.trim();
+            const lastName = document.getElementById('su-last').value.trim();
+            const email = document.getElementById('su-email').value.trim();
+            const password = document.getElementById('su-password').value;
+            const age = document.getElementById('su-age').value;
+            const gender = document.getElementById('su-gender').value;
+
+            // ── validation ──
+            if (!firstName || !lastName) {
+                showAlert('signup-alert', 'Please enter your first and last name.');
+                return;
+            }
+            if (!email) {
+                showAlert('signup-alert', 'Please enter your professional email.');
+                return;
+            }
+            if (!email.includes('@') || !email.includes('.')) {
+                showAlert('signup-alert', 'Please enter a valid email address.');
+                return;
+            }
+            if (password.length < 12) {
+                showAlert('signup-alert', 'Password must be at least 12 characters.');
+                return;
+            }
+            // optional: check for symbol in password
+            if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+                showAlert('signup-alert', 'Password must include at least one symbol (e.g. !@#$%).');
+                return;
+            }
+            if (!age) {
+                showAlert('signup-alert', 'Please enter your age.');
+                return;
+            }
+            const ageNum = parseInt(age, 10);
+            if (isNaN(ageNum) || ageNum < 13 || ageNum > 120) {
+                showAlert('signup-alert', 'Please enter a valid age (13–120).');
+                return;
+            }
+            if (!gender) {
+                showAlert('signup-alert', 'Please select your gender.');
+                return;
+            }
+
+            // ── signup ──
+            isSigningUp = true;
+            setLoading('signup-btn', true);
+
+            try {
+                const displayName = `${firstName} ${lastName}`;
+                const cred = await createUserWithEmailAndPassword(auth, email, password);
+                await updateProfile(cred.user, { displayName });
+
+                // ─── SAVE NAME, AGE, GENDER TO DATABASE ───
+                await saveUserToDatabase(cred.user, {
+                    displayName,
+                    firstName,
+                    lastName,
+                    age: ageNum,
+                    gender
+                });
+
+                // ✅ all done → go to dashboard
+                window.location.href = 'dashboard.html';
+
+            } catch (err) {
+                const msgs = {
+                    'auth/email-already-in-use': 'An account with this email already exists.',
+                    'auth/invalid-email': 'Please enter a valid email address.',
+                    'auth/weak-password': 'Password is too weak. Use at least 12 characters with symbols.',
+                    'auth/operation-not-allowed': 'Email/password accounts are not enabled. Contact support.',
+                    'auth/too-many-requests': 'Too many signup attempts. Please wait a moment and try again.'
+                };
+                showAlert('signup-alert', msgs[err.code] || err.message || 'Signup failed. Please try again.');
+            } finally {
+                isSigningUp = false;
+                setLoading('signup-btn', false);
+            }
+        };
+
+        // ─── Auth state listener ────────────────────────────
+        // Redirect to dashboard if already logged in, but NOT during signup.
+        onAuthStateChanged(auth, (user) => {
+            if (user && !isSigningUp) {
+                // Only redirect if we're not in the middle of signing up.
+                // Use a small delay to avoid racing with the signup flow.
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 100);
+            }
+        });
+
+        // ─── Enter key on password field triggers signup ────
+        document.getElementById('su-password').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                window.handleSignup();
+            }
+        });
+
+        // Also allow Enter on other fields for better UX
+        ['su-first', 'su-last', 'su-email', 'su-age', 'su-gender'].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        window.handleSignup();
+                    }
+                });
+            }
+        });
+
+        console.log('🚀 PulseGuard signup ready — Name, Age, Gender will be saved to Firebase.');
+    </script>
+</body>
+</html>
