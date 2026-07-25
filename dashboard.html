@@ -1330,18 +1330,21 @@
 
         <!-- Stats Grid -->
         <div class="stats-grid" id="stats-grid">
+            <!-- FIX 1: Added missing id="bpm-badge" element to the Heart Rate card.
+                 The JS references bpmBadge = document.getElementById('bpm-badge') but no
+                 such element existed in the HTML, causing all bpmBadge.* calls to throw. -->
             <div class="stat-card" id="bpm-card">
                 <div class="stat-header">
                     <span class="stat-label">Heart Rate</span>
                 </div>
                 <div class="stat-value" id="bpm-value">--</div>
                 <div class="stat-subtitle">BPM</div>
-               
+                <span class="stat-badge waiting-badge" id="bpm-badge" style="display:none;">Waiting</span>
             </div>
 
             <div class="stat-card" id="avg-bpm-card">
                 <div class="stat-header">
-                    <span class="stat-label">Average BPM (1 min)</span>
+                    <span class="stat-label">Average BPM</span>
                 </div>
                 <div class="stat-value" id="avg-bpm-value">--</div>
                 
@@ -1362,7 +1365,7 @@
                     <span class="stat-label">AI Prediction</span>
                 </div>
                 <div class="stat-value" id="ai-value" style="font-size: 20px;">--</div>
-                <div class="stat-subtitle" id="ai-subtitle">Waiting for model...</div>
+                
                 <span class="stat-badge waiting-badge" id="ai-badge" style="display:none;">Waiting</span>
             </div>
         </div>
@@ -1546,7 +1549,7 @@
         const bpmValue = document.getElementById('bpm-value');
         const avgBpmValue = document.getElementById('avg-bpm-value');
         const avgBpmBadge = document.getElementById('avg-bpm-badge');
-        const bpmBadge = document.getElementById('bpm-badge');
+        const bpmBadge = document.getElementById('bpm-badge');         // now resolves correctly
         const stressValue = document.getElementById('stress-value');
         const stressUnit = document.getElementById('stress-unit');
         const stressBadge = document.getElementById('stress-badge');
@@ -1883,6 +1886,7 @@
             currentSessionData = null;
 
             showDataElements(true);
+            initCharts(); // Re-measure canvas dimensions now that they are visible
 
             insightsContainer.innerHTML = '';
             const empty = document.createElement('div');
@@ -1956,7 +1960,7 @@
         // ============================================
         // Build session data and show results modal
         // ============================================
-        function buildAndShowResults() {
+        async function buildAndShowResults() {
             const avgBpm = recordedBpmData.length > 0 ?
                 recordedBpmData.reduce((a, b) => a + b, 0) / recordedBpmData.length :
                 0;
@@ -1976,6 +1980,9 @@
                 }
             }
 
+            // FIX 2: Added missing `await` on onnxSession.run().
+            // Without it, `results` was a Promise object instead of the inference output,
+            // so results[outputName] was undefined and the final prediction was always 'Unknown'.
             let prediction = 'Unknown';
             if (onnxSession && recordedBpmData.length > 0) {
                 try {
@@ -1983,7 +1990,7 @@
                     const normalizedBpm = (latestBpm - HR_TRAINING_MEAN) / HR_TRAINING_STD;
                     const inputName = onnxSession.inputNames[0];
                     const tensor = new ort.Tensor('float32', [normalizedBpm], [1, 1]);
-                    const results = onnxSession.run({ [inputName]: tensor });
+                    const results = await onnxSession.run({ [inputName]: tensor });
                     const outputName = onnxSession.outputNames[0];
                     const outputData = results[outputName].data;
                     let maxIndex = 0,
@@ -2520,14 +2527,14 @@
         }
 
         function logout() {
-    if (connectionState === 'connected') {
-        disconnectDevice();
-    }
-    if (isRecording) stopRecording();
-    resultsOverlay.classList.remove('active');
-    alert('Logged out successfully');
-    window.location.href = 'login.html';
-}
+            if (connectionState === 'connected') {
+                disconnectDevice();
+            }
+            if (isRecording) stopRecording();
+            resultsOverlay.classList.remove('active');
+            alert('Logged out successfully');
+            window.location.href = 'login.html';
+        }
 
         // ============================================
         // Initialization
